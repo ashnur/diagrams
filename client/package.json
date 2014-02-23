@@ -1,0 +1,40 @@
+{
+  "name": "flowchart",
+  "description": "flowchart",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/test.js",
+    "prepublish": "npm test",
+    "build-js": "browserify src/script/main.js | uglifyjs -mc > static/bundle.js",
+    "build-css": "cat src/style/*/*.css -o static/bundle.css -v",
+    "build": "npm run build-js & npm run build-css",
+    "watch-js": "watchify src/script/main.js -o static/bundle.js -dv",
+    "watch-css": "catw src/style/*/*.css -o static/bundle.css -v",
+    "watch-test": "nodemon test/test.js",
+    "watch": "npm run watch-js & npm run watch-css",
+    "start": "npm run buil && node server.js",
+    "start-dev": "npm run watch & npm start"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "tape": "*",
+    "better-stack-traces": "*",
+    "brfs": "*"
+  },
+  "repository": {
+    "type":"git",
+    "url": "git://github.com/ashnur/flowchart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ashnur/flowchart/issues"
+  },
+  "testling": {
+    "files": "test/*.js",
+    "browsers": [ "chrome" ]
+  },
+  "author": "ashnur",
+  "license": "BSD 2-Clause",
+  "readmeFilename": "README.md"
+}

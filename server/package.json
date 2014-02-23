@@ -1,0 +1,16 @@
+{
+  "name": "devserver",
+  "version": "0.0.0",
+  "description": "just a very basic server for development",
+  "main": "server.js",
+  "dependencies": {
+    "beeline": "~0.1.17"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "ashnur",
+  "license": "BSD-2-Clause"
+}
