@@ -1077,3 +1077,9 @@ ul {
   border-top-left-radius: 0;
 }
 
+
+
+svg {
+  display: block;
+  /* no unnecessary vertical scrollbar when height is 100% */
+}

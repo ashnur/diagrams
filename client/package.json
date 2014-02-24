@@ -17,6 +17,9 @@
     "start-dev": "npm run watch & npm start"
   },
   "dependencies": {
+    "viral": "0.0.4",
+    "enslave": "0.0.2",
+    "snapsvg": "git://github.com/sethvincent/Snap.svg#a34b8af69b"
   },
   "devDependencies": {
     "tape": "*",
@@ -24,7 +27,7 @@
     "brfs": "*"
   },
   "repository": {
-    "type":"git",
+    "type": "git",
     "url": "git://github.com/ashnur/flowchart.git"
   },
   "bugs": {
@@ -32,7 +35,9 @@
   },
   "testling": {
     "files": "test/*.js",
-    "browsers": [ "chrome" ]
+    "browsers": [
+      "chrome"
+    ]
   },
   "author": "ashnur",
   "license": "BSD 2-Clause",

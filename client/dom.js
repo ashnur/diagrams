@@ -24,6 +24,8 @@ void function(){
 
   module.exports = {
     $      : query
+  //, $id    : document.getElementById.bind(document)
+  , $id    : function(id){ return document.getElementById(id) }
   , create : create
   , attr   : set_attribute
   , attrs  : set_attributes
