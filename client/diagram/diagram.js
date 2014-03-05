@@ -14,24 +14,28 @@ void function(){
   var max = Math.max
 
   var Item = require('./item.js')
+  var print = console.log.bind(console)
 
   function from_defs(diagram, classname){
-    return diagram.svgel.select('defs .' + classname)
+    return diagram.svgel.parent().select('defs .' + classname)
   }
 
   function to_defs(diagram, svg){
-    var p = diagram.svgel
+    var p = diagram.svgel.parent()
     if ( typeof svg == 'string' ) {
       var el = Snap.parse(svg).select('g.Shape')
     } else if ( Array.isArray(svg) ) {
       var el = p.el.apply(p.el, svg)
     } else {
-      console.log('not sure how to handle')
+      // TODO: replace this
+      print('not sure how to handle')
     }
     return p.select('defs').append(el)
   }
 
   function intersect_rect(rect, point) {
+    var w = rect.width / 2
+    var h = rect.height / 2
     var x = rect.x
     var y = rect.y
 
@@ -41,28 +45,22 @@ void function(){
     // http://math.stackexchange.com/questions/108113/find-edge-between-two-boxes
     var dx = point.x - x
     var dy = point.y - y
-    var w = rect.width / 2
-    var h = rect.height / 2
 
     var sx, sy
     if (Math.abs(dy) * w > Math.abs(dx) * h) {
       // Intersection is top or bottom of rect.
-      if (dy < 0) {
-        h = -h
-      }
+      if (dy < 0) { h = -h }
       sx = dy === 0 ? 0 : h * dx / dy
       sy = h
     } else {
       // Intersection is left or right of rect.
-      if (dx < 0) {
-        w = -w
-      }
+      if (dx < 0) { w = -w }
       sx = w
       sy = dx === 0 ? 0 : w * dy / dx
     }
 
-    // TODO: this relative positioning based on the node size is killing me. Something is not right.
-    return {x: x + sx + 50, y: y + sy + 25}
+    // return { x: x + sx + Math.abs(w), y: y + sy + Math.abs(h) }
+    return { x: x + sx, y: y + sy }
   }
 
   function draw(diagram, el){
@@ -96,13 +94,13 @@ void function(){
     return bbox
   }
 
-
   function display(diagram){
     // apply height / width on nodes
     var ingraph = diagram.ingraph
     var bbox_cache = {}
     ingraph.eachNode(function(id, node){
       var classname = node.classname
+
       var bbox = bbox_cache[classname] || (bbox_cache[classname] = inviz_bbox(diagram, from_defs(diagram, classname)))
 
       node.attr('width', bbox.width)
@@ -116,16 +114,8 @@ void function(){
 
     var graph = diagram.outgraph = r.graph()
 
-    // width and height must be corrected for padding
-    var maxdim = Object.keys(bbox_cache).reduce(function(max, next_key){
-      var next = bbox_cache[next_key]
-      return {
-        width: max.width < next.width ? next.width : max.width
-      , height: max.width < next.height ? next.height : max.height
-      }
-    }, {width:0, height:0})
 
-    diagram.svgel.attr({ width: graph.width + maxdim.width, height: graph.height + maxdim.height })
+    diagram.svgel.attr({ width: graph.width, height: graph.height })
 
     r.eachNode(function(id, values){
       var node = diagram.ingraph.node(id)
@@ -133,15 +123,14 @@ void function(){
       draw(diagram, node)
     })
 
+    function point_to_string(p){ return p.x + ',' + p.y }
 
     r.eachEdge(function(id, from_id, to_id, values) {
       var edge = diagram.ingraph.edge(id)
-      console.log(edge)
-      var start = intersect_rect(edge.from.content.rect, values.points[0] )
-      var end = intersect_rect(edge.to.content.rect, values.points[0])
-      var points = [start, end].map(function(p){ return p.x + ',' + p.y }).join(' ')
+      var start = intersect_rect(edge.from, values.points[0])
+      var end = intersect_rect(edge.to, values.points[0])
+      var points = [start].concat(values.points).concat([end]).map(point_to_string).join(' ')
       edge.add_attr('polyline', 'points', points)
-      //var points = [edge.from.
       draw(diagram, edge)
     })
 
@@ -159,8 +148,8 @@ void function(){
       this.ingraph = graph.ingraph
       this.layout = dagre.layout()
 
-      this.svgel = Snap.apply(Snap, options.snap_args)
-      this.svgel.attr({id:uid()})
+
+      this.svgel = Snap.apply(Snap, options.snap_args).g().attr({ transform: "translate(20,20)", id:uid()})
     }
   , display: enslave(display)
   , draw: enslave(draw)

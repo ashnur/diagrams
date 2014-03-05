@@ -1,0 +1,10 @@
+
+    // width and height must be corrected for padding
+    var maxdim = Object.keys(bbox_cache).reduce(function(max, next_key){
+      var next = bbox_cache[next_key]
+      return {
+        width: max.width < next.width ? next.width : max.width
+      , height: max.width < next.height ? next.height : max.height
+      }
+    }, {width:0, height:0})
+    // diagram.svgel.attr({ width: graph.width + maxdim.width, height: graph.height + maxdim.height })

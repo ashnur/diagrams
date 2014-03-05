@@ -9,6 +9,7 @@ void function(){
   var dom = require('../util/dom.js')
   var uid = require('../util/unique_id.js')
   var rand_int = rnd.generator({integer: true})
+  var print = console.log.bind(console)
 
   var lipscfg = {
       count: 1                      // Number of words, sentences, or paragraphs to generate.
@@ -29,12 +30,14 @@ void function(){
     nodes[i] = graph.add_node(
       'PlainBoringBox'
     , function (node, values){
-        node.add_attr('rect', 'x', values.x)
-        node.add_attr('rect', 'y', values.y)
-        node.add_attr('rect', 'width', values.width)
+        node.attr('x', values.x)
+        node.attr('y', values.y)
+        node.add_attr('rect', 'x', values.x - values.width / 2)
+        node.add_attr('rect', 'y', values.y - values.height / 2)
+        node.add_attr('rect', 'width', values.width )
         node.add_attr('rect', 'height', values.height)
-        node.add_attr('text', 'y', values.y + 14) // TODO: 14 is half the line height, should come from config
-        node.add_attr('text tspan', 'x', values.x + 2) // TODO: 2 is distance from left border(aka. left padding), should come from config
+        node.add_attr('text', 'y', values.y + 14 - values.height / 2) // TODO: 14 is half the line height, should come from config
+        node.add_attr('text tspan', 'x', values.x + 2 - values.width / 2) // TODO: 2 is distance from left border(aka. left padding), should come from config
     }
     , {
         ".PlainBoringBox-text-action_title": {_text: lipsum()}
@@ -55,6 +58,8 @@ void function(){
 
   for ( var i = 0; i < links.length ; i++ ) {
     var link1 = rnd_node()
+    print( nodes[link1])
+
     links[i] = graph.connect(
       'PlainBoringLine'
     , nodes[link1]
