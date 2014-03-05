@@ -22,13 +22,23 @@ void function(){
           })
   }
 
+  function get_text(node){
+    return node.textContent || node.innerText
+  }
+
+  function set_text(node, text){
+    node.textContent = node.innerText = text
+  }
+
   module.exports = {
-    $      : query
-  //, $id    : document.getElementById.bind(document)
-  , $id    : function(id){ return document.getElementById(id) }
-  , create : create
-  , attr   : set_attribute
-  , attrs  : set_attributes
+    $        : query
+  //, $id      : document.getElementById.bind(document)
+  , $id      : function(id){ return document.getElementById(id) }
+  , create   : create
+  , attr     : set_attribute
+  , attrs    : set_attributes
+  , get_text : get_text
+  , set_text : set_text
   }
 
 }()

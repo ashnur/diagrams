@@ -13,7 +13,26 @@
 html, body{
 }
 
-svg{
+svg {
   display: block; /* no unnecessary vertical scrollbar when height is 100% */
+  overflow: hidden;
 }
 
+.PlainBoringBox-border {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: #fff;
+}
+
+.Edge-label rect {
+    fill: #fff;
+}
+
+.Edge {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: none;
+}
+
+.PlainBoringBox-text{
+}
