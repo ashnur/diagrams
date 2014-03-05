@@ -7,8 +7,8 @@
     "build": "npm run build-js & npm run build-css",
     "watch-js": "cd client && watchify -t brfs --debug -e test/test.js -o ../server/public/scripts/bundle.js; cd ../",
     "watch-css": "nodemon --watch client -e css --ignore '*.js' tools/build-css.js",
-    "watch": "npm run watch-js & npm run watch-css",
-    "start": "npm run build && nodemon --watch server --ignore 'public/' server/server.js",
-    "start-dev": "npm run watch & npm start"
+    "watch": "npm run watch-css & npm run watch-js",
+    "start-server": "nodemon --watch server --ignore 'public/' server/server.js",
+    "start-dev": "npm run start-server & npm run watch"
   }
 }

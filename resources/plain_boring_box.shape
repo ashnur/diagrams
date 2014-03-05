@@ -1,0 +1,7 @@
+<g class="Shape PlainBoringBox">
+  <rect  class="PlainBoringBox-border" width="100" height="50" ></rect>
+  <text text-anchor="left" class="PlainBoringBox-text" >
+    <tspan class="PlainBoringBox-text-action_title"></tspan>
+    <tspan dy="32"  class="PlainBoringBox-text-type"></tspan>
+  </text>
+</g>
