@@ -23,7 +23,7 @@ void function(){
   function to_defs(diagram, svg){
     var p = diagram.svgel.parent()
     if ( typeof svg == 'string' ) {
-      var el = Snap.parse(svg).select('g.Shape')
+      var el = Snap.parse(svg).select('*')
     } else if ( Array.isArray(svg) ) {
       var el = p.el.apply(p.el, svg)
     } else {
@@ -59,7 +59,6 @@ void function(){
       sy = dx === 0 ? 0 : w * dy / dx
     }
 
-    // return { x: x + sx + Math.abs(w), y: y + sy + Math.abs(h) }
     return { x: x + sx, y: y + sy }
   }
 
@@ -72,9 +71,7 @@ void function(){
 
   function set_line_attrs(item, line_height, x){
     item.g.selectAll('tspan').forEach(function(tspan, idx){
-      tspan.attr({ dy: idx ? line_height : 0
-                 , x: x
-                 })
+      tspan.attr({ dy: idx ? line_height : 0 , x: x })
     })
   }
 
@@ -94,6 +91,8 @@ void function(){
     return bbox
   }
 
+  function point_to_string(p){ return p.x + ',' + p.y }
+
   function display(diagram){
     // apply height / width on nodes
     var ingraph = diagram.ingraph
@@ -103,27 +102,35 @@ void function(){
 
       var bbox = bbox_cache[classname] || (bbox_cache[classname] = inviz_bbox(diagram, from_defs(diagram, classname)))
 
+      node.attr('x', bbox.x)
+      node.attr('y', bbox.y)
       node.attr('width', bbox.width)
       node.attr('height', bbox.height)
 
     })
 
     var r = diagram.layout
-                      //.debugLevel(4)
-                      .run(ingraph)
+
+    var gcfg = diagram.graph.config
+    if ( gcfg ) {
+      Object.keys(gcfg).forEach(function(method){
+        r = r[method](gcfg[method])
+      })
+    }
+    //r = r.debugLevel(4)
+    r = r.run(ingraph)
 
     var graph = diagram.outgraph = r.graph()
 
 
     diagram.svgel.attr({ width: graph.width, height: graph.height })
+    diagram.svgel.parent().attr({ width: graph.width + diagram.config.padding, height: graph.height + diagram.config.padding })
 
     r.eachNode(function(id, values){
       var node = diagram.ingraph.node(id)
       node.transform(values)
       draw(diagram, node)
     })
-
-    function point_to_string(p){ return p.x + ',' + p.y }
 
     r.eachEdge(function(id, from_id, to_id, values) {
       var edge = diagram.ingraph.edge(id)
@@ -138,18 +145,16 @@ void function(){
   }
 
   module.exports = viral.extend(new events.EventEmitter).extend({
-    init: function(options, graph){
-      this.options = options =  defaults(options, {
-      })
-
+    init: function(config, graph){
+      this.config = config
       this.items = {}
       this.connectors = {}
 
+      this.graph = graph
       this.ingraph = graph.ingraph
       this.layout = dagre.layout()
 
-
-      this.svgel = Snap.apply(Snap, options.snap_args).g().attr({ transform: "translate(20,20)", id:uid()})
+      this.svgel = Snap.apply(Snap, config.snap_args).g().attr({ transform: "translate(20,20)", id:uid()})
     }
   , display: enslave(display)
   , draw: enslave(draw)

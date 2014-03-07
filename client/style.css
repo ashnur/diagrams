@@ -18,21 +18,13 @@ svg {
   overflow: hidden;
 }
 
-.PlainBoringBox-border {
-    stroke: #333;
-    stroke-width: 1.5px;
-    fill: #fff;
-}
-
-.Edge-label rect {
-    fill: #fff;
-}
-
-.Edge {
-    stroke: #333;
-    stroke-width: 1.5px;
+.FCHLine-dots {
+    stroke-dasharray: 0.001 10;
+    stroke-width: 5px;
+    stroke-linecap: round;
+    stroke: #AAB2BD;
     fill: none;
 }
-
-.PlainBoringBox-text{
+.FCHLine-endarrow {
+    marker-end: url(#fch-endarrow);
 }

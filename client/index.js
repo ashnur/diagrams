@@ -35,8 +35,8 @@ void function(){
   * Create a new graph object to store diagram data in it
   * @return     {Object}   graph object
   */
-  function graph(){
-    return Graph.make()
+  function graph(cfgobj){
+    return Graph.make(cfgobj)
   }
 
   /**

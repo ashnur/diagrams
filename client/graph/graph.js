@@ -48,7 +48,8 @@ void function(){
   }
 
   module.exports = viral.extend(new events.EventEmitter).extend({
-    init: function(){
+    init: function(cfgobj){
+      this.config = cfgobj
       this.ingraph =  new dagre.Digraph()
     }
   , position: enslave(position)

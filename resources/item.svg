@@ -1,0 +1,11 @@
+<g class="FCHBox">
+  <g>
+    <path fill="#FFFFFF" d="m160 50c0 1 -1 3 -2 3h-155c-1 0 -2 -1 -2 -2v-45c0 -1 1 -2 3 -2h155c1 0 3 1 3 3v45z"/>
+    <path fill="#AAB2BD" d="m160 0v50h-155v-45h155m0 -5h-155c-3 0 -5 2 -5 5v45c0 3 2 5 5 5h155c3 0 5 -2 5 -5v-45c0 -3 -2 -5 -5 -5l0 0z"/>
+  </g>
+  <rect class="FCHBox-Text-bg"  fill="none" width="135" height="32.7"/>
+  <g class="FCHBox-Text">
+    <text class="FCHBox-Text-title" x="15" y="21" fill="#AAB2BD" font-family="'OpenSans-Semibold'" font-size="14">Action Title</text>
+    <text class="FCHBox-Text-type" x="15" y="42" fill="#AAB2BD" font-family="'OpenSans-Semibold'" font-size="14">Type: Normal</text>
+  </g>
+</g>

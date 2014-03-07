@@ -1,0 +1,12 @@
+<g class="FCHBox">
+  <g>
+    <path fill="#FFFFFF" d="M412,360.5c0,1.4-1.1,2.5-2.5,2.5h-155c-1.4,0-2.5-1.1-2.5-2.5v-45c0-1.4,1.1-2.5,2.5-2.5h155 c1.4,0,2.5,1.1,2.5,2.5V360.5z"/>
+    <path fill="#AAB2BD" d="M410,315v45H255v-45H410 M410,310H255c-2.8,0-5,2.2-5,5v45c0,2.8,2.2,5,5,5h155c2.8,0,5-2.2,5-5v-45
+      C415,312.2,412.8,310,410,310L410,310z"/>
+  </g>
+  <rect class="FCHBox-Text-bg" x="265" y="322.3" fill="none" width="135" height="32.7"/>
+  <g class="FCHBox-Text">
+    <text class="FCHBox-Text-title" transform="matrix(0.9989 0 0 1 265.0005 332.9672)" fill="#AAB2BD" font-family="'OpenSans-Semibold'" font-size="14">Action Title</text>
+    <text class="FCHBox-Text-type" transform="matrix(0.9989 0 0 1 265.0005 349.767)" fill="#AAB2BD" font-family="'OpenSans-Semibold'" font-size="14">Type: Normal</text>
+  </g>
+</g>
