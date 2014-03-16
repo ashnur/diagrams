@@ -24,15 +24,18 @@ void function(){
 
   var config = wt.config({
     padding: 21
+  , rank_detection_error_margin: 2
+  , edgeWidth: 5
   })
   var graph = wt.graph({
     rankDir: 'LR'
-  , nodeSep: 50
+  , universalSep: 29
   , edgeSep: 0
-  , rankSep: 50
+  , rankSep: 60
   })
 
   var nodes = Array(12)
+  var ranks = ['same_first','same_second','same_second','same_second','same_third','same_third','same_third','same_third','same_third','same_fourth','same_fourth','same_fourth']
   for ( var i = 0; i < nodes.length ; i++ ) {
     nodes[i] = graph.add_node(
       'FCHBox'
@@ -44,23 +47,15 @@ void function(){
         node.add_attr(':first', 'transform', 'translate(' + x + ',' + y + ')')
         node.add_attr('.FCHBox-Text-bg', 'width', values.width )
         node.add_attr('.FCHBox-Text-bg', 'height', values.height)
-
-        //node.add_attr('rect', 'x', values.x - values.width / 2)
-        //node.add_attr('rect', 'y', values.y - values.height / 2)
-        // node.add_attr('rect', 'width', values.width )
-        // node.add_attr('rect', 'height', values.height)
-        // node.add_attr('text', 'y', values.y + 14 - values.height / 2) // TODO: 14 is half the line height, should come from config
-        // node.add_attr('text tspan', 'x', values.x + 2 - values.width / 2) // TODO: 2 is distance from left border(aka. left padding), should come from config
     }
     , {
-        ".FCHBox-Text-title": {_text: lipsum()}
+        ".FCHBox-Text-title": {_text: (i+1) +' ' +lipsum()}
       , ".FCHBox-Text-type" : {_text: 'Type: ' + lipsum()}
-    })
+    }, ranks[i])
   }
 
   var rnd_node = rnd.generator({min: 0, max: nodes.length - 1, integer: true})
   // var links= Array(rand_int(1, Math.pow(rand_int(1, nodes.length), 2) - 1))
-  var links = Array(18)
   var connections = [
     [0,1]
   , [0,2]
@@ -68,19 +63,23 @@ void function(){
   , [1,4]
   , [1,5]
   , [1,6]
+  , [3,9]
   , [2,7]
   , [2,8]
-  , [3,9]
   , [4,9]
-  , [5,10]
   , [6,9]
-  , [7,10]
+  , [5,10]
+  , [7,11]
   , [8,11]
-  , [9,10]
+  , [9,7]
+  , [9,8]
+  , [9,11]
   , [10,7]
   , [10,8]
   , [10,11]
   ]
+  var links = Array(connections.length)
+
 
   function but(gen, x){
     var r = gen()
@@ -91,7 +90,7 @@ void function(){
   }
 
 
-  for ( var i = 0; i < links.length ; i++ ) {
+  for ( var i = connections.length - 1; i >= 0 ; i-- ) {
     //var link1 = rnd_node()
     //print( nodes[link1])
 
@@ -102,8 +101,6 @@ void function(){
     , nodes[connections[i][0]]
     , nodes[connections[i][1]]
     , function(edge, values){
-        //var points = [edge.from.
-        //node.add_attr('line', 'x', values.x)
     }
     , {
     }

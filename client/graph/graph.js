@@ -16,10 +16,11 @@ void function(){
   function select(graph, selector){
   }
 
-  function add_node(graph, classname, transform, content){
+  function add_node(graph, classname, transform, content, prefRank){
     var node = Node.make(graph, transform, {
         classname: classname
       , content: content
+      , rank: prefRank
     })
 
     graph.ingraph.addNode(node.id, node)

@@ -1,3 +1,4 @@
 <g class="FCHLine">
-  <polyline class="FCHLine-dots FCHLine-endarrow" />
+  <polyline class="FCHLine-dots Edge" />
+  <polyline class="FCHLine-endarrow Edge--end" />
 </g>

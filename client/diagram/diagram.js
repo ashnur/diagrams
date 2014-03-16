@@ -33,35 +33,6 @@ void function(){
     return p.select('defs').append(el)
   }
 
-  function intersect_rect(rect, point) {
-    var w = rect.width / 2
-    var h = rect.height / 2
-    var x = rect.x
-    var y = rect.y
-
-    // NOTE: For now we only support rectangles
-
-    // Rectangle intersection algorithm from:
-    // http://math.stackexchange.com/questions/108113/find-edge-between-two-boxes
-    var dx = point.x - x
-    var dy = point.y - y
-
-    var sx, sy
-    if (Math.abs(dy) * w > Math.abs(dx) * h) {
-      // Intersection is top or bottom of rect.
-      if (dy < 0) { h = -h }
-      sx = dy === 0 ? 0 : h * dx / dy
-      sy = h
-    } else {
-      // Intersection is left or right of rect.
-      if (dx < 0) { w = -w }
-      sx = w
-      sy = dx === 0 ? 0 : w * dy / dx
-    }
-
-    return { x: x + sx, y: y + sy }
-  }
-
   function draw(diagram, el){
     var new_el = from_defs(diagram, el.classname).clone()
     var node = hglue(new_el.node, el.content)
@@ -93,6 +64,7 @@ void function(){
 
   function point_to_string(p){ return p.x + ',' + p.y }
 
+
   function display(diagram){
     // apply height / width on nodes
     var ingraph = diagram.ingraph
@@ -117,14 +89,14 @@ void function(){
         r = r[method](gcfg[method])
       })
     }
+    r.rankSimplex = true
     //r = r.debugLevel(4)
     r = r.run(ingraph)
 
     var graph = diagram.outgraph = r.graph()
 
 
-    diagram.svgel.attr({ width: graph.width, height: graph.height })
-    diagram.svgel.parent().attr({ width: graph.width + diagram.config.padding, height: graph.height + diagram.config.padding })
+
 
     r.eachNode(function(id, values){
       var node = diagram.ingraph.node(id)
@@ -132,15 +104,51 @@ void function(){
       draw(diagram, node)
     })
 
-    r.eachEdge(function(id, from_id, to_id, values) {
-      var edge = diagram.ingraph.edge(id)
-      var start = intersect_rect(edge.from, values.points[0])
-      var end = intersect_rect(edge.to, values.points[0])
-      var points = [start].concat(values.points).concat([end]).map(point_to_string).join(' ')
-      edge.add_attr('polyline', 'points', points)
-      draw(diagram, edge)
+
+    var lanes = require('./edges.js')(r, diagram)
+
+    lanes.forEach(function(lane){
+      lane.forEach(function(pw){
+        var start = pw[0]
+        var end = pw[pw.length - 1]
+        var l = diagram.svgel.line(start.x, start.y, end.x, end.y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
+        pw.forEach(function(start){
+          if ( start.node ) {
+            var end = start.node
+            var l = diagram.svgel.line(start.x, start.y, end.x, end.y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
+          }
+        })
+      })
     })
 
+    lanes.skips.forEach(function(points){
+      var l = diagram.svgel.line(points[0].x, points[0].y, points[1].x, points[1].y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
+    })
+
+
+//    r.eachEdge(function(id, from_id, to_id, values) {
+//      var edge = diagram.ingraph.edge(id)
+////console.log(values.points)
+//      var start = values.points[0]
+//      var end = values.points[values.points.length - 1]
+//      var points = values.points.map(point_to_string) //.slice(0, -2)
+//      edge.add_attr('polyline.Edge', 'points', points.join(' '))
+//      draw(diagram, edge)
+//      diagram.svgel.circle(start.x, start.y, 3).attr({fill: '#0f0'})
+//      diagram.svgel.circle(end.x, end.y, 3).attr({fill: '#f00'})
+//    })
+
+    var move = diagram.svgel.matrix.clone()
+    if ( graph.rankDir == "LR" || graph.rankDir == "RL" ) {
+      graph.height = graph.height + lanes.growth * 2
+      var move = move.translate(0, lanes.growth)
+    } else {
+      graph.width = graph.width + lanes.growth * 2
+      var move = move.translate(lanes.growth, 0)
+    }
+
+    diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString()) // "translate("+move.join(',')+')'
+    diagram.svgel.parent().attr({ width: graph.width + diagram.config.padding, height: graph.height + diagram.config.padding })
     return r
   }
 

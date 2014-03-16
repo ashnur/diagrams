@@ -18,13 +18,14 @@ svg {
   overflow: hidden;
 }
 
-.FCHLine-dots {
+.Edge {
     stroke-dasharray: 0.001 10;
     stroke-width: 5px;
     stroke-linecap: round;
     stroke: #AAB2BD;
     fill: none;
 }
-.FCHLine-endarrow {
+.Edge--end {
+    fill: none;
     marker-end: url(#fch-endarrow);
 }
