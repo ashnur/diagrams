@@ -19,7 +19,7 @@ svg {
 }
 
 .Edge {
-    stroke-dasharray: 0.001 5.1;
+    stroke-dasharray: 0.001 8;
     stroke-width: 5px;
     stroke-linecap: round;
     stroke: #AAB2BD;

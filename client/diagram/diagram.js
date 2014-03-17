@@ -192,15 +192,15 @@ void function(){
 
     var move = diagram.svgel.matrix.clone()
     if ( graph.rankDir == "LR" || graph.rankDir == "RL" ) {
-      graph.height = graph.height + lanes.growth * 20
+      graph.height = graph.height + lanes.growth * 2
       var move = move.translate(0, lanes.growth)
     } else {
-      graph.width = graph.width + lanes.growth * 20
+      graph.width = graph.width + lanes.growth * 2
       var move = move.translate(lanes.growth, 0)
     }
 
     diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString())
-    diagram.svgel.parent().attr({ width: graph.width + diagram.config.padding, height: graph.height + diagram.config.padding })
+    diagram.svgel.parent().attr({ width: graph.width + diagram.config.edgeWidth + diagram.config.padding, height: graph.height + diagram.config.edgeWidth + diagram.config.padding })
     return layout
   }
 
