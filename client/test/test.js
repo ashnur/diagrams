@@ -53,8 +53,8 @@ void function(){
         node.add_attr('.FCHBox-Text-bg', 'height', values.height)
     }
     , {
-        ".FCHBox-Text-title": {_text: (i+1) +' ' +lipsum()}
-      , ".FCHBox-Text-type" : {_text: 'Type: ' + lipsum()}
+        ".FCHBox-Text-title": {_text: (i+1) +' ' + lipsum().slice(0, 17)}
+      , ".FCHBox-Text-type" : {_text: 'Type: ' + lipsum().slice(0, 13)}
     }, ranks[i])
   }
 
