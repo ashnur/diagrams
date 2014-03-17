@@ -19,7 +19,6 @@
   "dependencies": {
     "viral": "0.0.4",
     "enslave": "0.0.2",
-    "snapsvg": "git://github.com/sethvincent/Snap.svg#a34b8af69b",
     "dagre": "^0.4.5",
     "liberate": "^1.0.0",
     "hyperglue": "^1.3.0"

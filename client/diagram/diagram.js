@@ -1,5 +1,5 @@
 void function(){
-  var Snap = require('snapsvg')
+  // var Snap = require('snapsvg')
   var viral = require('viral')
   var enslave = require('enslave')
   var dagre = require('dagre')
