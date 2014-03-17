@@ -4,6 +4,7 @@ void function(){
   var Pathways = require('../pathway.js')
 
   var translate = require('./translate.js')
+  var V = require('./vectors.js')
 
   function point(x, y){
     return { x: x || 0, y: y || 0 }
@@ -104,6 +105,14 @@ void function(){
     var ranks_positions = []
     var ranks = []
     var norm_rank_dim = get_rank_dim.bind(null, diagram.config.rank_detection_error_margin, vertical ? 'y' : 'x' )
+
+    function get_junction(path, level){
+      return {
+        x: vertical ? level : path
+      , y: vertical ? path : level
+      }
+    }
+
     outgraph.eachNode(function(id, node){
       var rdim = norm_rank_dim(node)
       if ( ranks_positions.indexOf(rdim) == -1 ) {
@@ -152,23 +161,10 @@ void function(){
     })
 
     outgraph.eachNode(function(id, node){
-
       var exits = divide_side(side_from_direction(node, rankDir[1]), count_exits(lanes, id) + 1)
-      exits.forEach(function(p){
-        diagram.svgel.circle(p.x, p.y, 3).attr({fill: '#0f0'})
-      })
-
       node.exits = exits
       node.entries = divide_side(side_from_direction(node, rankDir[0]), 2)
-
     })
-
-    function get_junction(path, level){
-      return {
-        x: vertical ? level : path
-      , y: vertical ? path : level
-      }
-    }
 
     var fskips = []
     var bskips = []
@@ -203,7 +199,11 @@ void function(){
             target.tpwi = pw_idx
             var junctions = target.entries.map(function(entry, idx){
               var p = tr_entry(entry)
+              var vector = [entry.x - p.x, entry.y - p.y]
+              var s = V.scale(vector, -1.2 * diagram.config.edgeWidth / V.magnitude(vector))
+              p.cut = translate(s, entry)
               p.node = entry
+              p.entry = true
               target.entries[idx].junction = p
               return p
             })

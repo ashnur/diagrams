@@ -8,6 +8,7 @@ void function(){
   var defaults = require('../util/defaults.js')
   var uid = require('../util/unique_id.js')
   var dom = require('../util/dom.js')
+  var intersect = require('./intersect.js')
   var floor = Math.floor
   var ceil = Math.ceil
   var min = Math.min
@@ -64,6 +65,10 @@ void function(){
 
   function point_to_string(p){ return p.x + ',' + p.y }
 
+  function horizontal(line){
+    return line.getAttribute('x1') == line.getAttribute('x2')
+  }
+
 
   function display(diagram){
     // apply height / width on nodes
@@ -71,85 +76,132 @@ void function(){
     var bbox_cache = {}
     ingraph.eachNode(function(id, node){
       var classname = node.classname
-
       var bbox = bbox_cache[classname] || (bbox_cache[classname] = inviz_bbox(diagram, from_defs(diagram, classname)))
-
       node.attr('x', bbox.x)
       node.attr('y', bbox.y)
       node.attr('width', bbox.width)
       node.attr('height', bbox.height)
-
     })
 
-    var r = diagram.layout
-
+    var layout = diagram.layout
     var gcfg = diagram.graph.config
     if ( gcfg ) {
       Object.keys(gcfg).forEach(function(method){
-        r = r[method](gcfg[method])
+        layout = layout[method](gcfg[method])
       })
     }
-    r.rankSimplex = true
-    //r = r.debugLevel(4)
-    r = r.run(ingraph)
+    layout.rankSimplex = true
+    // calculate nodes layout
+    layout = layout.run(ingraph)
 
-    var graph = diagram.outgraph = r.graph()
+    var graph = diagram.outgraph = layout.graph()
 
-
-
-
-    r.eachNode(function(id, values){
+    // display nodes
+    layout.eachNode(function(id, values){
       var node = diagram.ingraph.node(id)
       node.transform(values)
       draw(diagram, node)
     })
 
 
-    var lanes = require('./edges.js')(r, diagram)
+    // calculate edges layout
+    var lanes = require('./edges.js')(layout, diagram)
+    var segments = []
+
+    var draw_bound = draw.bind(null, diagram)
 
     lanes.forEach(function(lane){
       lane.forEach(function(pw){
         var start = pw[0]
         var end = pw[pw.length - 1]
-        var l = diagram.svgel.line(start.x, start.y, end.x, end.y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
-        pw.forEach(function(start){
-          if ( start.node ) {
-            var end = start.node
-            var l = diagram.svgel.line(start.x, start.y, end.x, end.y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
+        // draw path
+        var path_segment = {id: uid(), x1: start.x, y1:start.y, x2: end.x, y2: end.y}
+        draw_bound({
+          classname: diagram.config.edgeClass
+        , content: {'.Edge:first': path_segment}
+        })
+        segments.push(path_segment)
+
+        // draw the junctions
+        var junctions = pw.filter(function(p){return p.node && ! p.entry })
+        draw_bound({
+          classname: diagram.config.edgeClass
+        , content: {
+            '.Edge': junctions.map(function(p){
+              var j_segment = {id: uid(), x1: p.x, y1:p.y, x2: p.node.x, y2: p.node.y}
+              segments.push(j_segment)
+              return { ':first': j_segment}
+            })
           }
         })
+
+        var entries = pw.filter(function(p){return !! p.entry })
+        draw_bound({
+          classname: diagram.config.edgeEndClass
+        , content: {
+            '.Edge': entries.map(function(p){
+              var j_segment = {id: uid(), x1: p.x, y1:p.y, x2: p.cut.x, y2: p.cut.y}
+              segments.push(j_segment)
+              return {':first': j_segment}
+            })
+          , '.Edge--end': entries.map(function(p){
+              var j_segment = {id: uid(), x1: p.cut.x, y1:p.cut.y, x2: p.node.x, y2: p.node.y}
+              segments.push(j_segment)
+              return {':first': j_segment}
+            })
+          }
+        })
+
       })
     })
 
-    lanes.skips.forEach(function(points){
-      var l = diagram.svgel.line(points[0].x, points[0].y, points[1].x, points[1].y ).attr({fill: 'none', stroke: '#333', "stroke-width": "2px"})
+    // draw the skips
+    draw_bound({
+      classname: diagram.config.edgeClass
+    , content: {'.Edge': lanes.skips.map(function(p){
+        var skip_segment = {id: uid(), x1: p[0].x, y1:p[0].y, x2: p[1].x, y2: p[1].y}
+        segments.push(skip_segment)
+        return { ':first': skip_segment }
+      })}
     })
 
+    var intersection_size = inviz_bbox(diagram, from_defs(diagram, diagram.config.intersectionClass))
+    var intersection_middle = [intersection_size.width / 2, intersection_size.height / 2]
+    segments.forEach(function(seg1, id1){
+      segments.forEach(function(seg2, id2){
+        if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2 && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2 ) {
+          var isct = intersect(seg1, seg2)
+          if ( isct ) {
+            var seg1node = dom.$id(seg1.id)
+            var seg2node = dom.$id(seg2.id)
+            var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
+            var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
+            if ( horizontal(topnode) ) {
+              intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[0] , isct[1] ).toTransformString())
+                            .transform(intersect_node.matrix.translate(isct[0] - intersection_middle[0], isct[1] - intersection_middle[1]))
+            } else {
+              intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[0] - intersection_middle[0], isct[1] - intersection_middle[1]))
+            }
 
-//    r.eachEdge(function(id, from_id, to_id, values) {
-//      var edge = diagram.ingraph.edge(id)
-////console.log(values.points)
-//      var start = values.points[0]
-//      var end = values.points[values.points.length - 1]
-//      var points = values.points.map(point_to_string) //.slice(0, -2)
-//      edge.add_attr('polyline.Edge', 'points', points.join(' '))
-//      draw(diagram, edge)
-//      diagram.svgel.circle(start.x, start.y, 3).attr({fill: '#0f0'})
-//      diagram.svgel.circle(end.x, end.y, 3).attr({fill: '#f00'})
-//    })
+            dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
+
+          }
+        }
+      })
+    })
 
     var move = diagram.svgel.matrix.clone()
     if ( graph.rankDir == "LR" || graph.rankDir == "RL" ) {
-      graph.height = graph.height + lanes.growth * 2
+      graph.height = graph.height + lanes.growth * 20
       var move = move.translate(0, lanes.growth)
     } else {
-      graph.width = graph.width + lanes.growth * 2
+      graph.width = graph.width + lanes.growth * 20
       var move = move.translate(lanes.growth, 0)
     }
 
-    diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString()) // "translate("+move.join(',')+')'
+    diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString())
     diagram.svgel.parent().attr({ width: graph.width + diagram.config.padding, height: graph.height + diagram.config.padding })
-    return r
+    return layout
   }
 
   module.exports = viral.extend(new events.EventEmitter).extend({
@@ -157,11 +209,9 @@ void function(){
       this.config = config
       this.items = {}
       this.connectors = {}
-
       this.graph = graph
       this.ingraph = graph.ingraph
       this.layout = dagre.layout()
-
       this.svgel = Snap.apply(Snap, config.snap_args).g().attr({ transform: "translate(20,20)", id:uid()})
     }
   , display: enslave(display)

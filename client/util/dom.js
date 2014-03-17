@@ -30,15 +30,25 @@ void function(){
     node.textContent = node.innerText = text
   }
 
+  function insertAfter(parentEl, sp1, sp2){
+    parentEl.insertBefore(sp1, sp2.nextSibling)
+  }
+
+  function removeNode(node){
+    node.parentNode.removeChild(node)
+  }
+
   module.exports = {
-    $        : query
-  //, $id      : document.getElementById.bind(document)
-  , $id      : function(id){ return document.getElementById(id) }
-  , create   : create
-  , attr     : set_attribute
-  , attrs    : set_attributes
-  , get_text : get_text
-  , set_text : set_text
+    $             : query
+  //, $id           : document.getElementById.bind(document)
+  , $id           : function(id){ return document.getElementById(id) }
+  , create        : create
+  , attr          : set_attribute
+  , attrs         : set_attributes
+  , get_text      : get_text
+  , set_text      : set_text
+  , remove        : removeNode
+  , insertAfter   : insertAfter
   }
 
 }()

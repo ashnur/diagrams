@@ -7,15 +7,6 @@ void function(){
   var Node = require('./node.js')
   var Edge = require('./edge.js')
 
-  function position(graph){
-  }
-
-  function switch_layout(graph, layout_name){
-  }
-
-  function select(graph, selector){
-  }
-
   function add_node(graph, classname, transform, content, prefRank){
     var node = Node.make(graph, transform, {
         classname: classname
@@ -36,16 +27,21 @@ void function(){
     return false
   }
 
-  function connect(graph, classname, from, to, transform, content){
-    var edge = Edge.make(graph, from, to, transform, {
-        classname: classname
-      , content: content
-    })
-    graph.ingraph.addEdge(edge.id, from.id, to.id, edge)
+  function connect(graph, classname, source, target, transform, content){
+    var edge = Edge.make(graph, source, target)
+    graph.ingraph.addEdge(edge.id, source.id, target.id, edge)
     return edge
   }
 
-  function disconnect(graph, node, node){
+  function disconnect(graph, source, target){
+    var g = graph.ingraph
+    var edge_id = g.outEdges(source.id, target.id)
+    if ( g.hasEdge(edge_id) ) {
+      g.delEdge(edge_id)
+      return true
+    } else {
+      return false
+    }
   }
 
   module.exports = viral.extend(new events.EventEmitter).extend({
@@ -53,14 +49,10 @@ void function(){
       this.config = cfgobj
       this.ingraph =  new dagre.Digraph()
     }
-  , position: enslave(position)
-  , layout: enslave(switch_layout)
   , add_node: enslave(add_node)
   , del_node: enslave(remove_node)
-  , attr: enslave(remove_node)
   , connect: enslave(connect)
   , disconnect: enslave(disconnect)
-  , select: enslave(select)
   })
 
 }()

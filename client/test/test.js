@@ -1,10 +1,8 @@
 void function(){
   "use strict"
-  var test = require('tape')
   var rt = require('random-token')
   var rnd = require('random-number')
   var fs = require('fs')
-  var enslave = require('enslave')
   var wt = require('../index.js')
   var dom = require('../util/dom.js')
   var uid = require('../util/unique_id.js')
@@ -18,6 +16,7 @@ void function(){
     , sentenceUpperBound: 2        // Maximum words per sentence.
     , format: 'plain'               // Plain text or html
   }
+
   var lipsum = require('lorem-ipsum').bind(null, lipscfg)
 
   function isNumber(n){ return typeof n == 'number' }
@@ -26,12 +25,16 @@ void function(){
     padding: 21
   , rank_detection_error_margin: 2
   , edgeWidth: 5
+  , edgeClass: 'FCHLine'
+  , edgeEndClass: 'FCHLine-witharrow'
+  , intersectionClass: 'FCHLine-intersection'
   })
+
   var graph = wt.graph({
     rankDir: 'LR'
   , universalSep: 29
   , edgeSep: 0
-  , rankSep: 60
+  , rankSep: 150
   })
 
   var nodes = Array(12)
@@ -40,6 +43,7 @@ void function(){
     nodes[i] = graph.add_node(
       'FCHBox'
     , function (node, values){
+// these lines shouldn't be here
         node.attr('x', values.x)
         node.attr('y', values.y)
         var x = values.x - values.width / 2
@@ -54,7 +58,7 @@ void function(){
     }, ranks[i])
   }
 
-  var rnd_node = rnd.generator({min: 0, max: nodes.length - 1, integer: true})
+  // var rnd_node = rnd.generator({min: 0, max: nodes.length - 1, integer: true})
   // var links= Array(rand_int(1, Math.pow(rand_int(1, nodes.length), 2) - 1))
   var connections = [
     [0,1]
@@ -83,16 +87,13 @@ void function(){
 
   function but(gen, x){
     var r = gen()
-    while ( r == x ) {
-      r = gen()
-    }
+    while ( r == x ) { r = gen() }
     return r
   }
 
 
   for ( var i = connections.length - 1; i >= 0 ; i-- ) {
     //var link1 = rnd_node()
-    //print( nodes[link1])
 
     links[i] = graph.connect(
       'FCHLine'
@@ -100,56 +101,20 @@ void function(){
     // , nodes[but(rnd_node, link1)]
     , nodes[connections[i][0]]
     , nodes[connections[i][1]]
-    , function(edge, values){
-    }
-    , {
-    }
   )
 
   }
 
   var diagram = wt.diagram(config, graph)
-  // diagram.to_defs(fs.readFileSync('../resources/plain_boring_box.shape'))
-  // diagram.to_defs(fs.readFileSync('../resources/plain_boring_line.shape'))
   diagram.to_defs(fs.readFileSync('../resources/font.svg'))
   // diagram.to_defs(fs.readFileSync('../resources/background.svg'))
   diagram.to_defs(fs.readFileSync('../resources/item.svg'))
   diagram.to_defs(fs.readFileSync('../resources/line-pattern.svg'))
   diagram.to_defs(fs.readFileSync('../resources/line-arrow.svg'))
+  diagram.to_defs(fs.readFileSync('../resources/line-intersection.svg'))
   diagram.to_defs(fs.readFileSync('../resources/line.svg'))
+  diagram.to_defs(fs.readFileSync('../resources/line-witharrow.svg'))
   diagram.display()
-
-  test('diagram in the dom', function(t) {
-    t.end()
-  })
-
-  test('adding and removing items', function(t) {
-
-    t.end()
-  })
-
-  test('adding and removing connections', function(t) {
-
-    t.end()
-  })
-
-  test('editing text', function(t) {
-
-    t.end()
-  })
-
-  test('changing configuration', function(t) {
-
-    t.end()
-  })
-
-  test('swapping entire graphs', function(t) {
-
-    t.end()
-  })
-
-
-
 
 
 }()

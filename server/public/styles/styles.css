@@ -1086,7 +1086,7 @@ svg {
 }
 
 .Edge {
-  stroke-dasharray: 0.001 10;
+  stroke-dasharray: 0.001 5.1;
   stroke-width: 5px;
   stroke-linecap: round;
   stroke: #AAB2BD;
@@ -1096,4 +1096,15 @@ svg {
 .Edge--end {
   fill: none;
   marker-end: url(#fch-endarrow);
+}
+
+.Edge-intersection line {
+  fill: none;
+  stroke-width: 2px;
+  stroke: #AAB2BD;
+}
+
+.Edge-intersection rect {
+  fill: #fff;
+  stroke: none;
 }

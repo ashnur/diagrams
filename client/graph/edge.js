@@ -4,14 +4,12 @@ void function(){
   var uid = require('../util/unique_id.js')
 
   var Edge = Node.extend({
-    init: function(graph, from, to, transform, attrs){
+    init: function(graph, source, target, transform, attrs){
       this.id = uid()
       this.type = 'edge'
       this.graph = graph
-      this.from = from
-      this.to = to
-      this.transform = transform.bind(null, this)
-      this.attrs(attrs)
+      this.source = source
+      this.target = target
     }
   })
 
