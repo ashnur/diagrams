@@ -71,6 +71,11 @@ void function(){
 
 
   function display(diagram){
+    // remove all svg nodes
+    // TODO: at some point this could be optimalized so we reuse the nodes which do not change
+    diagram.svgel.clear()
+
+
     // apply height / width on nodes
     var ingraph = diagram.ingraph
     var bbox_cache = {}
@@ -90,8 +95,8 @@ void function(){
         layout = layout[method](gcfg[method])
       })
     }
+
     layout.rankSimplex = true
-    // calculate nodes layout
     layout = layout.run(ingraph)
 
     var graph = diagram.outgraph = layout.graph()
@@ -171,16 +176,16 @@ void function(){
       segments.forEach(function(seg2, id2){
         if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2 && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2 ) {
           var isct = intersect(seg1, seg2)
-          if ( isct ) {
+          if ( isct[0] == 8 ) { // intersecting
             var seg1node = dom.$id(seg1.id)
             var seg2node = dom.$id(seg2.id)
             var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
             var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
             if ( horizontal(topnode) ) {
-              intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[0] , isct[1] ).toTransformString())
-                            .transform(intersect_node.matrix.translate(isct[0] - intersection_middle[0], isct[1] - intersection_middle[1]))
+              intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[1][0] , isct[1][1] ).toTransformString())
+                            .transform(intersect_node.matrix.translate(isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
             } else {
-              intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[0] - intersection_middle[0], isct[1] - intersection_middle[1]))
+              intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
             }
 
             dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
@@ -190,7 +195,7 @@ void function(){
       })
     })
 
-    var move = diagram.svgel.matrix.clone()
+    var move = new Snap.Matrix(1, 0, 0, 1, 0, 0)
     if ( graph.rankDir == "LR" || graph.rankDir == "RL" ) {
       graph.height = graph.height + lanes.growth * 2
       var move = move.translate(0, lanes.growth)
@@ -200,7 +205,10 @@ void function(){
     }
 
     diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString())
-    diagram.svgel.parent().attr({ width: graph.width + diagram.config.edgeWidth + diagram.config.padding, height: graph.height + diagram.config.edgeWidth + diagram.config.padding })
+    diagram.svgel.parent().attr({
+      width: graph.width + diagram.config.edgeWidth + diagram.config.padding
+    , height: graph.height + diagram.config.edgeWidth + diagram.config.padding
+    })
     return layout
   }
 
@@ -212,7 +220,8 @@ void function(){
       this.graph = graph
       this.ingraph = graph.ingraph
       this.layout = dagre.layout()
-      this.svgel = Snap.apply(Snap, config.snap_args).g().attr({ transform: "translate(20,20)", id:uid()})
+      this.id = uid()
+      this.svgel = Snap.apply(Snap, config.snap_args).g().attr({ transform: "translate(20,20)", id:this.id})
     }
   , display: enslave(display)
   , draw: enslave(draw)

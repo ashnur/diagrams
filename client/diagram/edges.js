@@ -5,6 +5,7 @@ void function(){
 
   var translate = require('./translate.js')
   var V = require('./vectors.js')
+  var intersect = require('./intersect.js')
 
   function point(x, y){
     return { x: x || 0, y: y || 0 }
@@ -121,9 +122,11 @@ void function(){
       }
       node.rdim = rdim
     })
+
     if ( reversed ) {
       ranks_positions.reverse()
     }
+
     outgraph.eachNode(function(id, node){
       var r = ranks_positions.indexOf(node.rdim)
       node.true_rank = r
@@ -155,8 +158,8 @@ void function(){
       lanes[idx] = Pathways.make()
       rank.forEach(function(edge_id){
         lanes[idx].add( outgraph.source(edge_id)
-                    , edge_id
-                    , outgraph.target(edge_id))
+                      , edge_id
+                      , outgraph.target(edge_id))
       })
     })
 
@@ -165,6 +168,7 @@ void function(){
       node.exits = exits
       node.entries = divide_side(side_from_direction(node, rankDir[0]), 2)
     })
+
 
     var fskips = []
     var bskips = []
@@ -249,6 +253,14 @@ void function(){
         })
       })
     })
+
+
+    lanes.forEach(function(lane, rank_nr){
+      lane.values.sort(function(a, b){
+        console.log(a, b)
+      })
+    })
+
     lanes.forEach(function(lane, rank_nr){
       lane.forEach(function(pathway, pw_idx){
         edges[rank_nr][pw_idx].sort(rank_sorter)

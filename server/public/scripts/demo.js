@@ -1,12 +1,7 @@
 void function(){
   "use strict"
-  var rnd = require('random-number')
-  var fs = require('fs')
-  var wt = require('../index.js')
-  var dom = require('../util/dom.js')
-  var uid = require('../util/unique_id.js')
-  var rand_int = rnd.generator({integer: true})
-  var print = console.log.bind(console)
+
+  var rand_int = RandomNumber.generator({integer: true})
 
   var lipscfg = {
       count: 1                      // Number of words, sentences, or paragraphs to generate.
@@ -16,11 +11,11 @@ void function(){
     , format: 'plain'               // Plain text or html
   }
 
-  var lipsum = require('lorem-ipsum').bind(null, lipscfg)
+  var lipsum = LoremIpsum.bind(null, lipscfg)
 
   function isNumber(n){ return typeof n == 'number' }
 
-  var config = wt.config({
+  var config = Diagram.config({
     padding: 21
   , rank_detection_error_margin: 2
   , edgeWidth: 5
@@ -31,7 +26,7 @@ void function(){
 
 
 
-  var graph = wt.graph({
+  var graph = Diagram.graph({
     rankDir: 'LR'
   , universalSep: 29
   , edgeSep: 0
@@ -106,16 +101,31 @@ void function(){
 
   }
 
-  var diagram = wt.diagram(config, graph)
-  diagram.to_defs(fs.readFileSync('../resources/font.svg'))
-  // diagram.to_defs(fs.readFileSync('../resources/background.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/item.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/line-pattern.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/line-arrow.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/line-intersection.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/line.svg'))
-  diagram.to_defs(fs.readFileSync('../resources/line-witharrow.svg'))
-  diagram.display()
+  var diagram = Diagram.diagram(config, graph)
+  var i = 0
+  var to_defs = diagram.to_defs.bind(diagram)
+  var defs = ['background.svg'
+  , '/font.svg'
+  , 'item.svg'
+  , 'line-pattern.svg'
+  , 'line-arrow.svg'
+  , '/line-intersection.svg'
+  , '/line.svg'
+  , '/line-witharrow.svg']
+
+  var getdefsXhrOpts = {
+      headers: { "Content-Type": "text/text" }
+  }
+
+  defs.forEach(function(def){
+    getdefsXhrOpts.uri = 'http://localhost:8001/resources/' + def
+    XHR(getdefsXhrOpts, function(err, resp, body){
+      to_defs(body)
+      if ( ++ i == defs.length ) diagram.display()
+    })
+  })
+
+  window.diagram = diagram
 
 
 }()

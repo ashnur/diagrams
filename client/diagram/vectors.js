@@ -9,6 +9,10 @@ void function(){
       return v[0] * w[1] - v[1] * w[0]
     }
 
+  , dot:  function add(v, w){
+      return [v[0] * w[0] + v[1] * w[1]]
+    }
+
   , add:  function add(v, w){
       return [v[0] + w[0], v[1] + w[1]]
     }

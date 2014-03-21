@@ -1,8 +1,4 @@
 void function(){
-//  var Snap = require('snapsvg')
-//    init: function(){
-//      this.svgel = Snap.apply(Snap, arguments)
-//    }
 
   if (!String.prototype.trim) {
     String.prototype.trim = function () {
