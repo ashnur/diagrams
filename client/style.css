@@ -23,10 +23,12 @@ svg {
     stroke-width: 5px;
     stroke-linecap: round;
     stroke: #AAB2BD;
-    fill: none;
+    fill: '#f00';
+    background: red;
 }
+
 .Edge--end {
-    fill: none;
+    fill: '#fff';
     marker-end: url(#fch-endarrow);
 }
 .Edge-intersection line {
@@ -38,5 +40,28 @@ svg {
 .Edge-intersection rect {
     fill: #fff;
     stroke: none;
-
 }
+
+.Edge--path{
+  stroke-width: 5px;
+  stroke: url(#fch-line-pattern);
+  fill: transparent;
+}
+
+/* these are values for the control graph with dagre-d3 */
+.node rect {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: #fff;
+}
+
+.edgeLabel rect {
+    fill: #fff;
+}
+
+.edgePath {
+    stroke: #333;
+    stroke-width: 1.5px;
+    fill: none;
+}
+/* end of dagre-d3 config */

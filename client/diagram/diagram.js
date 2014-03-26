@@ -3,8 +3,9 @@ void function(){
   var viral = require('viral')
   var enslave = require('enslave')
   var dagre = require('dagre')
-  var events = require('events')
   var hglue = require('hyperglue')
+  var zippy = require('zippy')
+  var pluck = require('../util/pluck.js')
   var defaults = require('../util/defaults.js')
   var uid = require('../util/unique_id.js')
   var dom = require('../util/dom.js')
@@ -13,9 +14,6 @@ void function(){
   var ceil = Math.ceil
   var min = Math.min
   var max = Math.max
-
-  var Item = require('./item.js')
-  var print = console.log.bind(console)
 
   function from_defs(diagram, classname){
     return diagram.svgel.parent().select('defs .' + classname)
@@ -28,8 +26,7 @@ void function(){
     } else if ( Array.isArray(svg) ) {
       var el = p.el.apply(p.el, svg)
     } else {
-      // TODO: replace this
-      print('not sure how to handle')
+      if ( diagram.config.debug ) console.error('unrecognizable svg variable type')
     }
     return p.select('defs').append(el)
   }
@@ -69,173 +66,160 @@ void function(){
     return line.getAttribute('x1') == line.getAttribute('x2')
   }
 
+  function apply_dimensions(diagram){
+    // apply height / width on nodes
+    var bbox_cache = {}
+    diagram.graph.eachNode(function(id, node){
+      var classname = node.classname
+      var bbox = bbox_cache[classname] || (bbox_cache[classname] = inviz_bbox(diagram, from_defs(diagram, classname)))
+      node.attr('width', bbox.width)
+      node.attr('height', bbox.height)
+    })
+  }
+
+  function display_nodes(layout, diagram){
+    // display nodes
+    layout.eachNode(function(id, values){
+      var node = diagram.graph.node(id)
+      node.attr('x', values.x)
+      node.attr('y', values.y)
+      var x = values.x - values.width / 2
+      var y = values.y - values.height / 2
+      node.add_attr(':first', 'transform', 'translate(' + x + ',' + y + ')')
+      node.transform(values)
+      draw(diagram, node)
+    })
+  }
+
+  function init_layout(diagram){
+    apply_dimensions(diagram)
+    return diagram.run(diagram.graph)
+  }
+
+
+  function draw_segment(diagram, transform, target, segment){
+    var transf_obj = Object.create(transform)
+    transf_obj.content = {}
+    transf_obj.content[target] = segment
+    draw(diagram, transf_obj)
+    return segment
+  }
+
+  function draw_segments(diagram, transform, target, segments){
+    var transf_obj = Object.create(transform)
+    transf_obj.content = {}
+    transf_obj.content[target] = segments.map(function(s){ return {':first': s}})
+    draw(diagram, transf_obj)
+    return segments
+  }
+
+  var get_junction_node = pluck('node')
+  var get_junction_cut = pluck('cut')
 
   function display(diagram){
+
+    var transform_object = { classname: diagram.config.edgeClass }
+
     // remove all svg nodes
     // TODO: at some point this could be optimalized so we reuse the nodes which do not change
     diagram.svgel.clear()
 
 
-    // apply height / width on nodes
-    var ingraph = diagram.ingraph
-    var bbox_cache = {}
-    ingraph.eachNode(function(id, node){
-      var classname = node.classname
-      var bbox = bbox_cache[classname] || (bbox_cache[classname] = inviz_bbox(diagram, from_defs(diagram, classname)))
-      node.attr('x', bbox.x)
-      node.attr('y', bbox.y)
-      node.attr('width', bbox.width)
-      node.attr('height', bbox.height)
-    })
+    var layout = init_layout(diagram)
 
-    var layout = diagram.layout
-    var gcfg = diagram.graph.config
-    if ( gcfg ) {
-      Object.keys(gcfg).forEach(function(method){
-        layout = layout[method](gcfg[method])
-      })
-    }
+    display_nodes(layout, diagram)
 
-    layout.rankSimplex = true
-    layout = layout.run(ingraph)
-
-    var graph = diagram.outgraph = layout.graph()
-
-    // display nodes
-    layout.eachNode(function(id, values){
-      var node = diagram.ingraph.node(id)
-      node.transform(values)
-      draw(diagram, node)
-    })
-
+    var outgraph = layout.graph()
+    var rankDir = outgraph.rankDir
+    var vertical = rankDir == 'TB' || rankDir == 'BT'
 
     // calculate edges layout
-    var lanes = require('./edges.js')(layout, diagram)
+    var lanes = require('./edges.js')(diagram, layout)
     var segments = []
-
-    var draw_bound = draw.bind(null, diagram)
+    var draw_segments_bound = draw_segments.bind(null, diagram, transform_object, '.Edge' )
 
     lanes.forEach(function(lane){
       lane.forEach(function(pw){
-        var start = pw[0]
-        var end = pw[pw.length - 1]
         // draw path
-        var path_segment = {id: uid(), x1: start.x, y1:start.y, x2: end.x, y2: end.y}
-        draw_bound({
-          classname: diagram.config.edgeClass
-        , content: {'.Edge:first': path_segment}
-        })
-        segments.push(path_segment)
-
+        segments.push(draw_segment(diagram, transform_object, '.Edge', pw.path))
         // draw the junctions
-        var junctions = pw.filter(function(p){return p.node && ! p.entry })
-        draw_bound({
-          classname: diagram.config.edgeClass
-        , content: {
-            '.Edge': junctions.map(function(p){
-              var j_segment = {id: uid(), x1: p.x, y1:p.y, x2: p.node.x, y2: p.node.y}
-              segments.push(j_segment)
-              return { ':first': j_segment}
-            })
-          }
-        })
-
-        var entries = pw.filter(function(p){return !! p.entry })
-        draw_bound({
-          classname: diagram.config.edgeEndClass
-        , content: {
-            '.Edge': entries.map(function(p){
-              var j_segment = {id: uid(), x1: p.x, y1:p.y, x2: p.cut.x, y2: p.cut.y}
-              segments.push(j_segment)
-              return {':first': j_segment}
-            })
-          , '.Edge--end': entries.map(function(p){
-              var j_segment = {id: uid(), x1: p.cut.x, y1:p.cut.y, x2: p.node.x, y2: p.node.y}
-              segments.push(j_segment)
-              return {':first': j_segment}
-            })
-          }
-        })
-
+        draw_segments_bound(pw)
       })
     })
 
-    // draw the skips
-    draw_bound({
-      classname: diagram.config.edgeClass
-    , content: {'.Edge': lanes.skips.map(function(p){
-        var skip_segment = {id: uid(), x1: p[0].x, y1:p[0].y, x2: p[1].x, y2: p[1].y}
-        segments.push(skip_segment)
-        return { ':first': skip_segment }
-      })}
-    })
+    // var intersection_size = inviz_bbox(diagram, from_defs(diagram, diagram.config.intersectionClass))
+    // var intersection_middle = [intersection_size.width / 2, intersection_size.height / 2]
+    // segments.forEach(function(seg1, id1){
+    //   segments.forEach(function(seg2, id2){
+    //     if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2
+    //                    && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2
+    //                    && seg1.x1 != seg2.x2 &&  seg1.y1 != seg2.y2
+    //                    && seg1.x1 != seg2.y1 &&  seg1.x2 != seg2.y2
+    //                    && seg1.x1 != seg2.y2 &&  seg1.x2 != seg2.y1
+    //        ) {
+    //       var isct = intersect(seg1, seg2)
+    //       if ( isct[0] == 8 ) { // intersecting
+    //         var seg1node = dom.$id(seg1.id)
+    //         var seg2node = dom.$id(seg2.id)
+    //         var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
+    //         var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
+    //         if ( horizontal(topnode) ) {
+    //           intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[1][0] , isct[1][1] ).toTransformString())
+    //                         .transform(intersect_node.matrix.translate(isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
+    //         } else {
+    //           intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
+    //         }
 
-    var intersection_size = inviz_bbox(diagram, from_defs(diagram, diagram.config.intersectionClass))
-    var intersection_middle = [intersection_size.width / 2, intersection_size.height / 2]
-    segments.forEach(function(seg1, id1){
-      segments.forEach(function(seg2, id2){
-        if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2 && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2 ) {
-          var isct = intersect(seg1, seg2)
-          if ( isct[0] == 8 ) { // intersecting
-            var seg1node = dom.$id(seg1.id)
-            var seg2node = dom.$id(seg2.id)
-            var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
-            var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
-            if ( horizontal(topnode) ) {
-              intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[1][0] , isct[1][1] ).toTransformString())
-                            .transform(intersect_node.matrix.translate(isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
-            } else {
-              intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
-            }
+    //         dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
 
-            dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
-
-          }
-        }
-      })
-    })
+    //       }
+    //     }
+    //   })
+    // })
 
     var move = new Snap.Matrix(1, 0, 0, 1, 0, 0)
-    if ( graph.rankDir == "LR" || graph.rankDir == "RL" ) {
-      graph.height = graph.height + lanes.growth * 2
+    if ( rankDir == "LR" || rankDir == "RL" ) {
+      outgraph.height = outgraph.height + lanes.growth * 2
       var move = move.translate(0, lanes.growth)
     } else {
-      graph.width = graph.width + lanes.growth * 2
+      outgraph.width = outgraph.width + lanes.growth * 2
       var move = move.translate(lanes.growth, 0)
     }
 
-    diagram.svgel.attr({ width: graph.width, height: graph.height }).transform(move.toTransformString())
+    diagram.svgel.attr({ width: outgraph.width, height: outgraph.height }).transform(move.toTransformString())
+
+    if ( vertical ) {
+      diagram.config.height = diagram.config.height + lanes.growth
+    } else {
+      diagram.config.width = diagram.config.width + lanes.growth
+    }
+
     diagram.svgel.parent().attr({
-      width: graph.width + diagram.config.edgeWidth + diagram.config.padding
-    , height: graph.height + diagram.config.edgeWidth + diagram.config.padding
+      width: outgraph.width + diagram.config.padding * 2
+    , height: outgraph.height + diagram.config.padding * 2
     })
-    return layout
+
+    return diagram
   }
 
-  module.exports = viral.extend(new events.EventEmitter).extend({
+  var emitter = require('../util/emitter.js')
+  var layout = emitter.extend(dagre.layout())
+
+  module.exports = layout.extend({
     init: function(config, graph){
       this.config = config
-      this.items = {}
-      this.connectors = {}
+      Object.keys(config.layout_config).forEach(function(method){
+        this[method](config.layout_config[method])
+      }, this)
+      this.rankSimplex = true
       this.graph = graph
-      this.ingraph = graph.ingraph
-      this.layout = dagre.layout()
       this.id = uid()
       this.svgel = Snap.apply(Snap, config.snap_args).g().attr({ transform: "translate(20,20)", id:this.id})
+      this.node = this.svgel.parent().node
     }
   , display: enslave(display)
   , draw: enslave(draw)
   , to_defs: enslave(to_defs)
-
-//  , addItem: enslave(add_item)
-//  , delItem: enslave(remove_item)
-//
-//  , connect: enslave(add_connector)
-//  , disconnect: enslave(remove_connector)
-//
-//
-//  , selectItems: enslave(filter_items)
-//  , selectConnectors: enslave(filter_items)
 
   })
 }()

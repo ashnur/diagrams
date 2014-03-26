@@ -1,6 +1,6 @@
 void function(){
 
-  var V = require('./vectors.js')
+  var V = require('../util/vectors.js')
 
   module.exports = function(seg1, seg2){
     var p = [seg1.x1, seg1.y1]
@@ -9,7 +9,7 @@ void function(){
     var s = V.subtract([seg2.x2, seg2.y2], q)
 
     // collinear overlapping            1
-    // collinear disjoing               2
+    // collinear disjoint               2
     // parallel                         4
     // intersecting                     8
     // non-parallel non-intersecting   16
@@ -25,7 +25,7 @@ void function(){
       } else {
         var rr = V.dot(r, r)
         var q_pdr = V.dot(q_p, r)
-        var ss = V.dot(r, r)
+        var ss = V.dot(s, s)
         var q_pds = V.dot(q_p, s)
         if ( ( 0 <= q_pdr &&  q_pdr <= rr ) || ( 0 <= q_pds && q_pds <= ss ) ) {
           return [1]

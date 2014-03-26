@@ -10,28 +10,32 @@ void function(){
     return Arr.make(arr)
   }
 
-  function forEach(set, fn){
-    set.values.forEach(fn)
+  function forEach(arr, fn){
+    arr.values.forEach(fn)
   }
 
-  function reduce(set, fn, init){
+  function filter(arr, fn){
+    return arr.values.filter(fn)
+  }
+
+  function reduce(arr, fn, init){
     if ( init !== undefined ) {
-      return set.values.reduce(fn, init)
+      return arr.values.reduce(fn, init)
     } else {
-      return set.values.reduce(fn)
+      return arr.values.reduce(fn)
     }
   }
 
-  function map(set, fn){
-    return set.values.map(fn)
+  function map(arr, fn){
+    return arr.values.map(fn)
   }
 
-  function some(set, fn){
-    return set.values.some(fn)
+  function some(arr, fn){
+    return arr.values.some(fn)
   }
 
-  function indexOf(set, value){
-    return set.values.indexOf(value)
+  function indexOf(arr, value){
+    return arr.values.indexOf(value)
   }
 
   var Arr = viral.extend({
@@ -40,6 +44,7 @@ void function(){
     }
   , forEach: enslave(forEach)
   , reduce: enslave(reduce)
+  , filter: enslave(filter)
   , map: enslave(map)
   , some: enslave(some)
   , size: enslave(size)

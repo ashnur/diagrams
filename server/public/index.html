@@ -7,14 +7,51 @@
     <style id="u-fpbg-rowheight" ></style>
   </head>
   <body class="">
+
+    <div id="ranked_nodes"></div>
+    <div id="ranked_control">
+      <svg width="100%" height="100%">
+          <g transform="translate(20,20)"/>
+      </svg>
+    </div>
+    <div id="unranked_nodes"></div>
+    <div id="unranked_control">
+      <svg width="100%" height="100%">
+          <g transform="translate(20,20)"/>
+      </svg>
+    </div>
+    <div id="random_graph_1"></div>
+    <div id="random_control_1">
+      <svg width="100%" height="100%">
+          <g transform="translate(20,20)"/>
+      </svg>
+    </div>
+    <div id="random_graph_2"></div>
+    <div id="random_control_2">
+      <svg width="100%" height="100%">
+          <g transform="translate(20,20)"/>
+      </svg>
+    </div>
+    <div id="random_graph_3"></div>
+    <div id="random_control_3">
+      <svg width="100%" height="100%">
+          <g transform="translate(20,20)"/>
+      </svg>
+    </div>
     <!--[if IE]>
     <script src="http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js"></script>
     <script src="http://ie7-js.googlecode.com/svn/version/2.1(beta4)/ie7-squish.js"></script>
     <![endif]-->
     <!--script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.1.0/es5-shim.min.js"></script-->
     <!--script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/2.1.0/es5-sham.min.js"></script-->
+
     <script src="scripts/snap.svg.js"></script>
     <script src="scripts/diagram.js"></script>
+
+    <!-- d3 and dagre-d3 are needed only for the demo control graph -->
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://cpettitt.github.io/project/dagre-d3/v0.1.5/dagre-d3.js"></script>
+    <!-- these are only some utilities for the demo -->
     <script src="scripts/xhr.min.js"></script>
     <script src="scripts/lorem-ipsum.min.js"></script>
     <script src="scripts/random-number.min.js"></script>

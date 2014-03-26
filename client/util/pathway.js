@@ -14,11 +14,27 @@ void function(){
                       , A.targets.union(B.targets))
   }
 
-  function same(A, B){
+  function same(graph, A, B){
 
-    return A.sources.joint(B.sources) ||
-           A.edges.joint(B.edges) ||
-           A.targets.joint(B.targets)
+    // function getpres(pres, tid){
+    //   return pres.concat(graph.predecessors(tid))
+    // }
+
+    // function getsucc(pres, tid){
+    //   return pres.concat(graph.successors(tid))
+    // }
+
+    // var Apres = A.targets.reduce(getpres,[])
+    // var Bpres = B.targets.reduce(getpres,[])
+    // var Asucc = A.sources.reduce(getsucc,[])
+    // var Bsucc = B.sources.reduce(getsucc,[])
+
+
+    // return A.edges.joint(B.edges)
+    //     || ( A.sources.joint(B.sources) && Asucc.every(function(pid){ return Bsucc.indexOf(pid) > -1 }) )
+    //     || ( A.targets.joint(B.targets) && Apres.every(function(pid){ return Bpres.indexOf(pid) > -1 }) )
+
+    return A.edges.joint(B.edges) || ( A.targets.joint(B.targets) ) // && Apres.every(function(pid){ return Bpres.indexOf(pid) > -1 }) )
   }
 
   var Pathway = viral.extend({
@@ -34,7 +50,7 @@ void function(){
 
   function indexOf(P, p){
     for ( var i = 0; i < P.values.length; i++ ) {
-      if ( same(P.values[i], p) ) return i
+      if ( same(P.graph, P.values[i], p) ) return i
     }
     return -1
   }
@@ -63,7 +79,11 @@ void function(){
   }
 
   var Pathways = Set.extend({
-    add: enslave(add)
+    init: function(graph, arr){
+      this.graph = graph
+      this.values = arr != null ? arr.values.slice(0) : []
+    }
+  , add: enslave(add)
   , indexOf: enslave(indexOf)
   })
 

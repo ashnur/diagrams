@@ -46,7 +46,6 @@ void function(){
     return Diagram.make(cfgobj, graph)
   }
 
-
   module.exports = {
     config: config
   , graph: graph
