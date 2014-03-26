@@ -18,7 +18,7 @@ void function(){
 
   function remove_node(graph, node_id){
     if ( graph.hasNode(node_id) ) {
-      char.delNode(node_id)
+      graph.delNode(node_id)
       return true
     }
     return false
