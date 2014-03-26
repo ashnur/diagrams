@@ -218,7 +218,7 @@ void function(){
   }
 
   defs.forEach(function(def){
-    getdefsXhrOpts.uri = 'http://localhost:8001/resources/' + def
+    getdefsXhrOpts.uri = '/resources/' + def
     XHR(getdefsXhrOpts, function(err, resp, body){
       diagram_ranked.to_defs(body)
       diagram_unranked.to_defs(body)
@@ -226,10 +226,10 @@ void function(){
       diagram_random_2.to_defs(body)
       diagram_random_3.to_defs(body)
       if ( ++ i == defs.length ) {
-        diagram_ranked.display()
-        document.getElementById('ranked_nodes').appendChild(diagram_ranked.node)
-        diagram_unranked.display()
-        document.getElementById('unranked_nodes').appendChild(diagram_unranked.node)
+//        diagram_ranked.display()
+//        document.getElementById('ranked_nodes').appendChild(diagram_ranked.node)
+//        diagram_unranked.display()
+//        document.getElementById('unranked_nodes').appendChild(diagram_unranked.node)
         diagram_random_1.display()
         document.getElementById('random_graph_1').appendChild(diagram_random_1.node)
         diagram_random_2.display()
@@ -237,10 +237,10 @@ void function(){
         diagram_random_3.display()
         document.getElementById('random_graph_3').appendChild(diagram_random_3.node)
         // display control for verifying random graph
-        var renderer = new dagreD3.Renderer()
-        renderer.run(diagram_ranked.graph, d3.select("#ranked_control svg g"))
-        var renderer = new dagreD3.Renderer()
-        renderer.run(diagram_unranked.graph, d3.select("#unranked_control svg g"))
+//        var renderer = new dagreD3.Renderer()
+//        renderer.run(diagram_ranked.graph, d3.select("#ranked_control svg g"))
+//        var renderer = new dagreD3.Renderer()
+//        renderer.run(diagram_unranked.graph, d3.select("#unranked_control svg g"))
         var renderer = new dagreD3.Renderer()
         renderer.run(diagram_random_1.graph, d3.select("#random_control_1 svg g"))
         var renderer = new dagreD3.Renderer()

@@ -105,12 +105,12 @@ void function(){
     return segment
   }
 
-  function draw_segments(diagram, transform, target, segments){
+  function draw_segments(diagram, transform, target, edges){
     var transf_obj = Object.create(transform)
     transf_obj.content = {}
-    transf_obj.content[target] = segments.map(function(s){ return {':first': s}})
+    transf_obj.content[target] = edges.map(function(s){ return {':first': s}})
     draw(diagram, transf_obj)
-    return segments
+    return edges
   }
 
   var get_junction_node = pluck('node')
@@ -134,64 +134,55 @@ void function(){
     var vertical = rankDir == 'TB' || rankDir == 'BT'
 
     // calculate edges layout
-    var lanes = require('./edges.js')(diagram, layout)
-    var segments = []
-    var draw_segments_bound = draw_segments.bind(null, diagram, transform_object, '.Edge' )
+    var edges = require('./edges.js')(diagram, layout)
 
-    lanes.forEach(function(lane){
-      lane.forEach(function(pw){
-        // draw path
-        segments.push(draw_segment(diagram, transform_object, '.Edge', pw.path))
-        // draw the junctions
-        draw_segments_bound(pw)
+    draw_segments(diagram, transform_object, '.Edge', edges)
+
+    var intersection_size = inviz_bbox(diagram, from_defs(diagram, diagram.config.intersectionClass))
+    var intersection_middle = [intersection_size.width / 2, intersection_size.height / 2]
+    edges.forEach(function(seg1, id1){
+      edges.forEach(function(seg2, id2){
+        if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2
+                       && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2
+                       && seg1.x1 != seg2.x2 &&  seg1.y1 != seg2.y2
+                       && seg1.x1 != seg2.y1 &&  seg1.x2 != seg2.y2
+                       && seg1.x1 != seg2.y2 &&  seg1.x2 != seg2.y1
+           ) {
+          var isct = intersect(seg1, seg2)
+          if ( isct[0] == 8 ) { // intersecting
+            var seg1node = dom.$id(seg1.id)
+            var seg2node = dom.$id(seg2.id)
+            var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
+            var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
+            if ( horizontal(topnode) ) {
+              intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[1][0] , isct[1][1] ).toTransformString())
+                            .transform(intersect_node.matrix.translate(isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
+            } else {
+              intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
+            }
+
+            dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
+
+          }
+        }
       })
     })
 
-    // var intersection_size = inviz_bbox(diagram, from_defs(diagram, diagram.config.intersectionClass))
-    // var intersection_middle = [intersection_size.width / 2, intersection_size.height / 2]
-    // segments.forEach(function(seg1, id1){
-    //   segments.forEach(function(seg2, id2){
-    //     if ( id2 > id1 && seg1.x1 != seg2.x1 &&  seg1.x2 != seg2.x2
-    //                    && seg1.y1 != seg2.y1 &&  seg1.y2 != seg2.y2
-    //                    && seg1.x1 != seg2.x2 &&  seg1.y1 != seg2.y2
-    //                    && seg1.x1 != seg2.y1 &&  seg1.x2 != seg2.y2
-    //                    && seg1.x1 != seg2.y2 &&  seg1.x2 != seg2.y1
-    //        ) {
-    //       var isct = intersect(seg1, seg2)
-    //       if ( isct[0] == 8 ) { // intersecting
-    //         var seg1node = dom.$id(seg1.id)
-    //         var seg2node = dom.$id(seg2.id)
-    //         var topnode = seg1node.compareDocumentPosition(seg2node) & 4 ? seg1node : seg2node
-    //         var intersect_node = draw(diagram, { classname: diagram.config.intersectionClass , content: {} })
-    //         if ( horizontal(topnode) ) {
-    //           intersect_node.transform((new Snap.Matrix(1, 0, 0, 1, 0 , 0)).rotate(90, isct[1][0] , isct[1][1] ).toTransformString())
-    //                         .transform(intersect_node.matrix.translate(isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
-    //         } else {
-    //           intersect_node.transform(new Snap.Matrix(1, 0, 0, 1, isct[1][0] - intersection_middle[0], isct[1][1] - intersection_middle[1]))
-    //         }
-
-    //         dom.insertAfter(topnode.parentNode, intersect_node.node, topnode.nextSibling)
-
-    //       }
-    //     }
-    //   })
-    // })
-
     var move = new Snap.Matrix(1, 0, 0, 1, 0, 0)
     if ( rankDir == "LR" || rankDir == "RL" ) {
-      outgraph.height = outgraph.height + lanes.growth * 2
-      var move = move.translate(0, lanes.growth)
+      outgraph.height = outgraph.height + edges.growth * 2
+      var move = move.translate(0, edges.growth)
     } else {
-      outgraph.width = outgraph.width + lanes.growth * 2
-      var move = move.translate(lanes.growth, 0)
+      outgraph.width = outgraph.width + edges.growth * 2
+      var move = move.translate(edges.growth, 0)
     }
 
     diagram.svgel.attr({ width: outgraph.width, height: outgraph.height }).transform(move.toTransformString())
 
     if ( vertical ) {
-      diagram.config.height = diagram.config.height + lanes.growth
+      diagram.config.height = diagram.config.height + edges.growth
     } else {
-      diagram.config.width = diagram.config.width + lanes.growth
+      diagram.config.width = diagram.config.width + edges.growth
     }
 
     diagram.svgel.parent().attr({
