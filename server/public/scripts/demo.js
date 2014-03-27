@@ -202,6 +202,7 @@ void function(){
   var diagram_random_1 = Diagram.diagram(config, graph_random_1)
   var diagram_random_2 = Diagram.diagram(config, graph_random_2)
   var diagram_random_3 = Diagram.diagram(config, graph_random_3)
+  window.rand_dg_3 = diagram_random_3
 
   var i = 0
   var defs = ['background.svg'

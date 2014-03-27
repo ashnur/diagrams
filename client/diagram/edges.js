@@ -1,10 +1,10 @@
 void function(){
 
-  var zippy = require('zippy')
-  var zip = zippy.zip
-  var zipWith = zippy.zipWith
+  var zip = require('../util/zips.js').zip
   var uid = require('../util/unique_id.js')
   var translate = require('../util/translate.js')
+
+var log = console.log.bind(console)
 
   function node_from_id(graph, id){
     var n = graph.node(id)
@@ -164,14 +164,9 @@ void function(){
         return {
           exit: exit
         , entry: entry.entry_points[entry.entries[exit.node.id]]
+        , joints: []
         }
-      }).reduce(function(steps, step){
-        if ( steps.some(function(s){ return s.exit.node == step.node }) ) {
-
-        }
-        steps.push(step)
-        return steps
-      }, [])
+      })
 
       rank.forward_skips = rank.exits.filter(function(exit, i){
         return nodes_by_id[exit.tid].true_rank - rn > 0
@@ -211,8 +206,19 @@ void function(){
         s.exit_junction  = translate(vertical ? [0, tr] : [tr, 0], s.exit)
         s.entry_junction = translate(vertical ? [0, tr - (reversed ? -1 * rankSep : rankSep)]
                                               : [tr - (reversed ? -1 * rankSep : rankSep), 0], s.entry)
+        s.joints.push(s.exit)
+        s.joints.push(s.exit_junction)
+        s.joints.push(s.entry_junction)
+        s.joints.push(s.entry)
+
         return s
-      })
+      }).reduce(function(steps, step){
+        if ( steps.some(function(s){ return s.exit.node == step.node }) ) {
+log(step)
+        }
+        steps.push(step)
+        return steps
+      }, [])
 
       rank.skippoints.exits = rank.skippoints.exits.map(function(point, i){
         var tr = rank.psep * (i + rank.steps.length + 1)
@@ -249,15 +255,7 @@ void function(){
       var bs_length = ranks.slice(0, rn).reduce(function(tsc, r){ return tsc + r.backward_skips.length }, 1)
 
       return pw.concat(rank.steps.reduce(function(steps, s, si){
-
-        return steps.concat([ create_segment(s.exit, s.exit_junction)
-               , create_segment(s.exit_junction, s.entry_junction)
-               , create_segment(s.entry_junction, s.entry)])
-
-        return steps.concat(steps.joints.reduce(function(p, n){
-          create_segment(p, n)
-          return n
-        }))
+        return  steps.concat(zip(s.joints, s.joints.slice(1)).map(function(j){ return create_segment(j[0], j[1]) }))
 
       }, []).concat(rank.forward_skips.reduce(function(skips, s, si){
         var level_amount = (fs_length + si) * skipsep
