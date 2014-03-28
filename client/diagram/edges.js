@@ -3,6 +3,8 @@ void function(){
   var zip = require('../util/zips.js').zip
   var uid = require('../util/unique_id.js')
   var translate = require('../util/translate.js')
+  var side_points = require('./side_points.js')
+  var junction_points = require('./junction_points.js')
 
 var log = console.log.bind(console)
 
@@ -10,46 +12,6 @@ var log = console.log.bind(console)
     var n = graph.node(id)
     n.id = id
     return n
-  }
-
-  function point(x, y){ return { x: x || 0, y: y || 0 } }
-
-  function side_from_direction(node, d){
-    var c = point(node.x, node.y)
-    var w = node.width / 2
-    var h = node.height / 2
-    var tl = translate([-w, -h], c)
-    var tr = translate([w, -h], c)
-    var bl = translate([-w, h], c)
-    var br = translate([w, h], c)
-    switch ( d ) {
-      case 'L' :
-        return [tl, bl]
-      case 'R' :
-        return [tr, br]
-      case 'B' :
-        return [bl, br]
-      case 'T' :
-        return [tl, tr]
-    }
-  }
-
-  function divide_side(side, n){
-    var X1 = side[0].x
-    var Y1 = side[0].y
-    var X2 = side[1].x
-    var Y2 = side[1].y
-
-    var W = X2 - X1
-    var H = Y2 - Y1
-    var points = []
-    var rw = W / (n + 1)
-    var rh = H / (n + 1)
-    var i = 0
-    while ( i++ < n ) {
-      points.push(translate([ i * rw, i * rh ], side[0]))
-    }
-    return points
   }
 
   function get_nodes(diagram, layout){
@@ -82,29 +44,28 @@ var log = console.log.bind(console)
     return { id: uid(), x1: start.x, y1:start.y, x2: end.x, y2: end.y}
   }
 
-  function get_junction(vertical, path, level){
-    return {
-      x: vertical ? level : path
-    , y: vertical ? path : level
-    }
-  }
-
   function idx_to_id(s, t, i){
     s[t.id] = i
     return s
   }
 
+  function sort_by_orientation(vertical, a, b){ return vertical ? a : b }
 
   module.exports = function calculate_edges(diagram, layout){
+
+
     var rankSep = diagram.config.layout_config.rankSep
     var g = layout.graph()
     var rankDir = g.rankDir
     var reversed = rankDir == 'BT' || rankDir == 'RL'
     var vertical = rankDir == 'TB' || rankDir == 'BT'
+    var orientate = sort_by_orientation.bind(null, vertical)
     var level_dir = vertical ? 'width' : 'height'
     var rank_attr = vertical ? 'y' : 'x'
     var nodes = get_nodes(diagram, layout)
     var skipsep = diagram.config.skipSep
+
+
     var i = nodes.reduce(function(o, node){
       var v = node.rdim
       ;(o[v] || (o[v] = [])).push(node)
@@ -114,28 +75,26 @@ var log = console.log.bind(console)
                               .map(function(k){ return this[k] }, i)
 
     nodes = nodes.map(function(n){
-      var exit_points = divide_side(side_from_direction(n, rankDir[1]), n.targets.length)
-      n.exit_points = exit_points.map(function(p, i){
-        p.tid = n.targets[i].id
-        p.node = n
-        return p
-      })
-      n.exits = n.targets.reduce(idx_to_id, {})
 
-      var entry_points = divide_side(side_from_direction(n, rankDir[0]), n.sources.length)
-      n.entry_points = entry_points.map(function(p, i){
-        p.sid = n.sources[i].id
-        p.node = n
-        return p
-      })
+      n.exits = n.targets.reduce(idx_to_id, {})
+      n.exit_points = n.targets.map(function(target){ return side_points.make('exit', n, rankDir, target) })
+
       n.entries = n.sources.reduce(idx_to_id, {})
+      n.entry_points = n.sources.map(function(source){ return side_points.make('entry', n, rankDir, source) })
+
       return n
+
     })
 
     var nodes_by_id = nodes.reduce(function(nids, n){
       nids[n.id] = n
       return nids
     }, {})
+
+    function step_of_exit(exit){
+      var entry = nodes_by_id[exit.match.id]
+      return [exit, entry.entry_points[entry.entries[exit.relative.id]]]
+    }
 
     ranks.push([])
 
@@ -158,38 +117,25 @@ var log = console.log.bind(console)
     }).map(function(rank, rn){
 
       rank.steps = rank.exits.filter(function(exit, i){
-        return (rank.node_ids).indexOf(exit.tid) > -1
-      }).map(function(exit){
-        var entry = nodes_by_id[exit.tid]
-        return {
-          exit: exit
-        , entry: entry.entry_points[entry.entries[exit.node.id]]
-        , joints: []
-        }
-      })
+          return (rank.node_ids).indexOf(exit.match.id) > -1
+        }).map(step_of_exit)
 
       rank.forward_skips = rank.exits.filter(function(exit, i){
-        return nodes_by_id[exit.tid].true_rank - rn > 0
-      }).map(function(exit){
-        var entry = nodes_by_id[exit.tid]
-        return {
-          exit: exit
-        , entry: entry.entry_points[entry.entries[exit.node.id]]
-        }
-      })
+          return nodes_by_id[exit.match.id].true_rank - rn > 0
+        }).map(function(exit){
+          var entry = nodes_by_id[exit.match.id]
+          return [exit, entry.entry_points[entry.entries[exit.node.id]]]
+        })
 
       rank.backward_skips = rank.entries.filter(function(entry, i){
-        return nodes_by_id[entry.sid].true_rank - rn >= 0
-      }).map(function(entry){
-        var exit = nodes_by_id[entry.sid]
-        return {
-          exit: exit.exit_points[exit.exits[entry.node.id]]
-        , entry: entry
-        }
-      })
+          return nodes_by_id[entry.match.id].true_rank - rn >= 0
+        }).map(function(entry){
+          var exit = nodes_by_id[entry.match.id]
+          return [exit.exit_points[exit.exits[entry.node.id]], entry]
+        })
 
       function not_in_steps(p){
-        return rank.steps.every(function(s){ return s.exit != p && s.entry != p})
+        return rank.steps.every(function(s){ return s.indexOf(p) == -1 })
       }
 
       rank.skippoints = {
@@ -199,63 +145,80 @@ var log = console.log.bind(console)
 
       return rank
     }).map(function(rank){
-      rank.psep = rankSep / (rank.entries.length + rank.exits.length - rank.steps.length + 1)
-      rank.steps = rank.steps.map(function(s, si){
-        var tr = rank.psep * (si + 1)
-        if ( reversed ) tr  = tr * -1
-        s.exit_junction  = translate(vertical ? [0, tr] : [tr, 0], s.exit)
-        s.entry_junction = translate(vertical ? [0, tr - (reversed ? -1 * rankSep : rankSep)]
-                                              : [tr - (reversed ? -1 * rankSep : rankSep), 0], s.entry)
-        s.joints.push(s.exit)
-        s.joints.push(s.exit_junction)
-        s.joints.push(s.entry_junction)
-        s.joints.push(s.entry)
 
-        return s
-      }).reduce(function(steps, step){
-        if ( steps.some(function(s){ return s.exit.node == step.node }) ) {
-log(step)
-        }
-        steps.push(step)
-        return steps
-      }, [])
+      rank.paths_count = (rank.entries.length + rank.exits.length - rank.steps.length + 1)
+      rank.step_segments = rank.steps.map(function(s, si){
+          return [
+            s[0]
+          , junction_points.make('step', s[0], rank, rankDir, rankSep)
+          , junction_points.make('step', s[s.length - 1], rank, rankDir, rankSep)
+          , s[s.length - 1]
+          ]
+        }).reduce(function(steps, step){
+
+            log(step, steps)
+
+            var common_sources = steps.filter(function(s){ return s[0].relative == step[0].relative })
+            if ( common_sources.length ) {
+              var common_targets = common_sources.map(function(s){ return s[0].match })
+              var current_source = step[0].relative
+              var current_target = step[0].match
+
+              if( common_sources.length == 1 || common_targets.indexOf(current_target) > -1 ) {
+                common_sources.map(function(s){
+                    log(s)
+                    // s from steps has the same exit node as step
+                    //  merge the two exit nodes
+                    //  set the exit and exit junction of step to what s has
+                    step[0].remove()
+                    step[1].remove()
+                    step[0] = s[0]
+                    step[1] = s[1]
+                    rank.path_count --
+                    // later we scan all segments and remove duplicates
+                  })
+              }
+            }
+
+          steps.push(step)
+          return steps
+       }, [])
 
       rank.skippoints.exits = rank.skippoints.exits.map(function(point, i){
-        var tr = rank.psep * (i + rank.steps.length + 1)
-        if ( reversed ) tr  = tr * -1
-        point.junction = translate(vertical ? [0, tr] : [tr, 0], point)
-        return point
-      })
+          var tr = (reversed ? -1 : 1 ) * rank.psep * (i + rank.steps.length + 1)
+          point.junction = translate(orientate([0, tr], [tr, 0]), point.static())
+          return point
+        })
 
       rank.skippoints.entries = rank.skippoints.entries.map(function(point, i){
-        var tr = rank.psep * (i + rank.steps.length + rank.skippoints.exits.length + 1)
-        if ( reversed ) tr  = tr * -1
-        point.junction = translate(vertical ? [0, tr - (reversed ? -1 * rankSep : rankSep)]
-                                            : [tr - (reversed ? -1 * rankSep : rankSep), 0], point)
-        return point
-      })
+          var tr = rank.psep * (i + rank.steps.length + rank.skippoints.exits.length + 1)
+          tr = reversed ? rankSep - tr : tr - rankSep
+          point.junction = translate(orientate([0, tr], [tr, 0]), point.static())
+          return point
+        })
 
       return rank
     })
 
     function calculate_skip(skips, level, s){
-      var p2 = get_junction(vertical, s.exit.junction[rank_attr], level)
-      var p3 = get_junction(vertical, s.entry.junction[rank_attr], level )
+      var skip_entry = point(orientate(level, s[0].junction[rank_attr]), orientate(s[0].junction[rank_attr], level))
+      var skip_exit = point(orientate(level, s[s.length - 1].junction[rank_attr]), orientate(s[s.length - 1].junction[rank_attr], level))
+
       return skips.concat([
-               create_segment(s.exit, s.exit.junction)
-             , create_segment(s.exit.junction, p2)
-             , create_segment(p2, p3)
-             , create_segment(p3, s.entry.junction)
-             , create_segment(s.entry.junction, s.entry)
-             ])
+               [s[0].static(), s[0].junction.static()]
+             , [s[0].junction.static(), skip_entry.static()]
+             , [skip_entry.static(), skip_exit.static()]
+             , [skip_exit.static(), s[s.length - 1].junction.static()]
+             , [s[s.length - 1].junction.static(), s[s.length - 1].static()]
+             ].map(function(pair){ return create_segment(pair[0], pair[1]) } ))
     }
 
     var edges = ranks.reduce(function(pw, rank, rn){
       var fs_length = ranks.slice(0, rn).reduce(function(tsc, r){ return tsc + r.forward_skips.length }, 1)
       var bs_length = ranks.slice(0, rn).reduce(function(tsc, r){ return tsc + r.backward_skips.length }, 1)
 
-      return pw.concat(rank.steps.reduce(function(steps, s, si){
-        return  steps.concat(zip(s.joints, s.joints.slice(1)).map(function(j){ return create_segment(j[0], j[1]) }))
+      return pw.concat(rank.step_segments.reduce(function(steps, s, si){
+        return  steps.concat(zip(s, s.slice(1)).map(function(j){ return create_segment(j[0].static(), j[1].static()) }))
 
       }, []).concat(rank.forward_skips.reduce(function(skips, s, si){
         var level_amount = (fs_length + si) * skipsep
