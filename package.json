@@ -5,7 +5,7 @@
     "build-js": "cd client && browserify -t brfs --debug -e index.js --s Diagram -o ../server/public/scripts/diagram.js; cd ../",
     "build-css": "node ./tools/build-css.js",
     "build": "npm run build-js & npm run build-css",
-    "watch-js": "cd client && watchify -t brfs --debug -e index.js --s Diagram -o ../server/public/scripts/diagram.js; cd ../",
+    "watch-js": "cd client && watchify --debug -e index.js -o ../server/public/scripts/diagram.js; cd ../",
     "watch-css": "nodemon --watch client -e css --ignore '*.js' tools/build-css.js",
     "watch": "npm run watch-css & npm run watch-js",
     "start-server": "nodemon --watch server --ignore 'public/' server/server.js",

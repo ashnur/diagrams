@@ -51,5 +51,6 @@ void function(){
   , graph: graph
   , diagram: diagram
   }
+  if ( window ) window.Diagram = module.exports
 
 }()

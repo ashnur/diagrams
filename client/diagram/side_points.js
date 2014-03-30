@@ -60,6 +60,10 @@ void function(){
     return list(point).splice(index(point), 1)
   }
 
+  function get_gap_number(point){
+    return point.relative.true_rank + (point.type == 'entry' ? 0 : 1)
+  }
+
   module.exports = viral.extend({
     init: function(type, relative, rankDir, match){
       this.type = type
@@ -71,6 +75,7 @@ void function(){
   , y: enslave(get_y)
   , static: enslave(calculate)
   , remove: enslave(remove)
+  , gap_number: enslave(get_gap_number)
   })
 
 }()

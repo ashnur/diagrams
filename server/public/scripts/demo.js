@@ -84,7 +84,7 @@ void function(){
     , {
         ".FCHBox-Text-title": {_text: (i+1) +' ' + lipsum().slice(0, 17)}
       , ".FCHBox-Text-type" : {_text: 'Type: ' + lipsum().slice(0, 13)}
-    })
+    }, 'same_rank' + i )
   }
 
   var random_nodes_2 = Array(5)
@@ -182,6 +182,7 @@ void function(){
   links[0] = graph_random_1.connect( 'FCHLine' , random_nodes_1[0] , random_nodes_1[2])
   links[1] = graph_random_1.connect( 'FCHLine' , random_nodes_1[0] , random_nodes_1[3])
   links[2] = graph_random_1.connect( 'FCHLine' , random_nodes_1[1] , random_nodes_1[3])
+  links[3] = graph_random_1.connect( 'FCHLine' , random_nodes_1[1] , random_nodes_1[0])
 
   links[0] = graph_random_2.connect( 'FCHLine' , random_nodes_2[0] , random_nodes_2[3])
   links[1] = graph_random_2.connect( 'FCHLine' , random_nodes_2[0] , random_nodes_2[4])
@@ -228,23 +229,22 @@ void function(){
       if ( ++ i == defs.length ) {
 //        diagram_ranked.display()
 //        document.getElementById('ranked_nodes').appendChild(diagram_ranked.node)
+//        var renderer = new dagreD3.Renderer()
 //        diagram_unranked.display()
 //        document.getElementById('unranked_nodes').appendChild(diagram_unranked.node)
-        diagram_random_1.display()
-        document.getElementById('random_graph_1').appendChild(diagram_random_1.node)
-//        diagram_random_2.display()
-//        document.getElementById('random_graph_2').appendChild(diagram_random_2.node)
-//        diagram_random_3.display()
-//        document.getElementById('random_graph_3').appendChild(diagram_random_3.node)
-        // display control for verifying random graph
-//        var renderer = new dagreD3.Renderer()
 //        renderer.run(diagram_ranked.graph, d3.select("#ranked_control svg g"))
 //        var renderer = new dagreD3.Renderer()
 //        renderer.run(diagram_unranked.graph, d3.select("#unranked_control svg g"))
+        diagram_random_1.display()
+        document.getElementById('random_graph_1').appendChild(diagram_random_1.node)
         var renderer = new dagreD3.Renderer()
         renderer.run(diagram_random_1.graph, d3.select("#random_control_1 svg g"))
+//        diagram_random_2.display()
+//        document.getElementById('random_graph_2').appendChild(diagram_random_2.node)
 //        var renderer = new dagreD3.Renderer()
 //        renderer.run(diagram_random_2.graph, d3.select("#random_control_2 svg g"))
+//        diagram_random_3.display()
+//        document.getElementById('random_graph_3').appendChild(diagram_random_3.node)
 //        var renderer = new dagreD3.Renderer()
 //        renderer.run(diagram_random_3.graph, d3.select("#random_control_3 svg g"))
 

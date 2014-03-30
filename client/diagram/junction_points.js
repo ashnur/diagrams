@@ -1,7 +1,11 @@
 void function(){
+  var uid = require('../util/unique_id.js')
   var viral = require('viral')
   var enslave = require('enslave')
   var translate = require('../util/translate.js')
+var log = console.log.bind(console)
+
+  function nodups(r, i, rs){ return rs.indexOf(r) === i }
 
   function orientate(rankDir, a, b){
     return (rankDir == 'TB' || rankDir == 'BT') ? a : b
@@ -9,11 +13,11 @@ void function(){
 
   function calculate(point){
 
-    var si = index(point)
+    var idx = index(point) + 1
     var rankDir = point.rankDir
     var rankSep = point.rankSep
     var reversed = rankDir == 'BT' || rankDir == 'RL'
-    var tr = (reversed ? -1 : 1) * psep(point) * (si + 1)
+    var tr = (reversed ? -1 : 1) * psep(point) * idx
     var tr_sep = tr - (reversed ? -1 * rankSep : rankSep)
 
     var vector =  point.relative.type == 'exit' ? orientate(rankDir, [0, tr], [tr, 0])
@@ -27,39 +31,65 @@ void function(){
   function get_y(point){ return calculate(point).y }
 
   function index(point){
-    return list(point).indexOf(point.relative)
+    var l = list(point)
+    var r = l.indexOf(point.type == 'step' && point.relative.type == 'entry' ? point.origin : point)
+    if ( r == -1 ) log( l )
+    return r
   }
 
+  function get_gap(point){
+    return point.type == 'entry' && point.skipDir == 'forward'  ? point.gap.get_gaps()[point.relative.relative.true_rank]
+         : point.type == 'exit'  && point.skipDir == 'backward' ? point.gap.get_gaps()[point.relative.relative.true_rank]
+         : point.gap
+  }
+
+  function is_junc(gn, p){
+    return p.init === Junction.init
+           && p.gap_number() == gn
+           && ! (p.type == 'step' && p.relative.type == 'entry')
+  }
+  function juncs(gi, js, s){ js = js.concat(s.filter(is_junc.bind(null, gi))); return js }
+
   function list(point){
-    return point.rank.steps.map(function(step){
-      return point.relative.type == 'exit' ? step[0] : step[step.length - 1]
-    })
+    var junctions = juncs.bind(null, point.gap_number())
+    var l = point.gap.edges().reduce(junctions, []).filter(nodups)
+    return l
   }
 
   function psep(point){
-    var rank = point.rank
-log(rank.path_count)
-    return point.rankSep / rank.path_count
-    return point.rankSep / (rank.entries.length + rank.exits.length - rank.steps.length + 1)
+    var l = list(point)
+    //log( gap, l.length)
+    return point.rankSep / (l.length + 1)
   }
 
   function remove(point){
-    return point.rank.steps.splice(index(point), 1)
+    var gap = get_gap(point)
+    return gap.steps.splice(index(point), 1)
   }
 
-  module.exports = viral.extend({
-    init: function(type, relative, rank, rankDir, rankSep){
+  function get_gap_number(point){
+    return get_gap(point).index
+  }
+
+  var Junction =  viral.extend({
+    init: function(type, relative, si, gap, rankDir, rankSep, origin, skipDir){
       this.type = type
       this.relative = relative
-      this.rank = rank
+      this.si = si
+      this.gap = gap
       this.rankDir = rankDir
       this.rankSep = rankSep
-
+      this.origin = origin
+      this.skipDir = skipDir
+      this.id = uid()
     }
   , x: enslave(get_x)
   , y: enslave(get_y)
   , static: enslave(calculate)
   , remove: enslave(remove)
+  , gap_number: enslave(get_gap_number)
   })
+
+  module.exports = Junction
 
 }()
