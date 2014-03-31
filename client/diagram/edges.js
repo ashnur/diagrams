@@ -13,6 +13,7 @@ var log = console.log.bind(console)
   function node_from_id(graph, id){
     var n = graph.node(id)
     n.id = id
+    n.graph = graph
     return n
   }
 
@@ -55,57 +56,75 @@ var log = console.log.bind(console)
   function idx_to_id(s, t, i){
     s[t.id] = i
     return s
+
   }
+
 
   function sort_by_orientation(vertical, a, b){ return vertical ? a : b }
 
   module.exports = function calculate_edges(diagram, layout){
 
 
-    function step_of_exit(gap, exit, si){
-      var entry_node = nodes_by_id[exit.match.id]
-      var entry = entry_node.entry_points[entry_node.entries[exit.relative.id]]
-      var exit_junction = junction_points.make('step', exit, si, gap, rankDir, rankSep, exit.relative, exit.relative.true_rank)
+    function steps(gap, exit_point, si){
+      var entry_node = exit_point.pair_node
+      var entry_point = exit_point.other_endpoint()
+      var exit_junction = junction_points.make('step', exit_point, si, gap, rankDir, rankSep)
       return [
-        exit
+        exit_point
       , exit_junction
-      , junction_points.make('step', entry, si, gap, rankDir, rankSep, exit_junction, entry_node.true_rank)
-      , entry
+      , junction_points.make('step', entry_point, si, gap, rankDir, rankSep, null, exit_junction)
+      , entry_point
       ]
     }
 
-    function forward_skip_of_exit(gap, exit, si){
-
-      var entry_node = nodes_by_id[exit.match.id]
-      var entry = entry_node.entry_points[entry_node.entries[exit.relative.id]]
-      var exit_junction = junction_points.make('exit', exit, si, gap, rankDir, rankSep, exit.relative, 'forward', exit.relative.true_rank)
-      var entry_junction = junction_points.make('entry', entry, si, gap, rankDir, rankSep, entry, 'forward', entry_node.true_rank)
+    function skips(gap, direction, exit_point, si){
+      var entry_node = exit_point.pair_node
+      var entry_point = exit_point.other_endpoint()
+      var exit_junction = junction_points.make('exit', exit_point, si, gap, rankDir, rankSep, direction)
+      var entry_junction = junction_points.make('entry', entry_point, si, gap, rankDir, rankSep, direction)
+      var rev = direction == 'forward' ? reversed : ! reversed
       var skip = [
-        exit
+        exit_point
       , exit_junction
-      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
-      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
+      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
+      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
       , entry_junction
-      , entry
+      , entry_point
       ]
       return skip
     }
 
-    function backward_skip_of_exit(gap, entry, si){
-      var exit_node = nodes_by_id[entry.match.id]
-      var exit = exit_node.exit_points[exit_node.exits[entry.relative.id]]
-      var exit_junction = junction_points.make('exit', exit, si, gap, rankDir, rankSep, exit.relative, 'backward', exit.relative.true_rank)
-      var entry_junction = junction_points.make('entry', entry, si, gap, rankDir, rankSep, entry, 'backward', entry.relative.true_rank)
-      var skip = [
-        exit
-      , exit_junction
-      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
-      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
-      , entry_junction
-      , entry
-      ]
-      return skip
-    }
+//    function forward_skips(gap, exit_point, si){
+//
+//      var entry_node = exit_point.pair_node
+//      var entry_point = exit_point.other_endpoint()
+//      var exit_junction = junction_points.make('exit', exit_point, si, gap, rankDir, rankSep, 'forward')
+//      var entry_junction = junction_points.make('entry', entry_point, si, gap, rankDir, rankSep, 'forward')
+//      var skip = [
+//        exit_point
+//      , exit_junction
+//      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
+//      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
+//      , entry_junction
+//      , entry_point
+//      ]
+//      return skip
+//    }
+//    function backward_skips(gap, exit_point, si){
+//      var entry_node = exit_point.pair_node
+//      var entry_point = exit_point.other_endpoint()
+//      var exit_junction = junction_points.make('exit', exit_point, si, gap, rankDir, rankSep, 'backward')
+//      var entry_junction = junction_points.make('entry', entry_point, si, gap, rankDir, rankSep, 'backward')
+//      var skip = [
+//        exit_point
+//      , exit_junction
+//      , skip_points.make('backward',  exit_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
+//      , skip_points.make('backward', entry_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
+//      , entry_junction
+//      , entry_point
+//      ]
+//      return skip
+//    }
 
     var rankSep = diagram.config.layout_config.rankSep
     var g = layout.graph()
@@ -126,16 +145,11 @@ var log = console.log.bind(console)
 
     nodes = nodes.map(function(n){
       n.exits = n.targets.reduce(idx_to_id, {})
-      n.exit_points = n.targets.map(function(target){ return side_points.make('exit', n, rankDir, target) })
+      n.exit_points = n.targets.map(function(target_node){ return side_points.make('exit', n, rankDir, target_node) })
       n.entries = n.sources.reduce(idx_to_id, {})
-      n.entry_points = n.sources.map(function(source){ return side_points.make('entry', n, rankDir, source) })
+      n.entry_points = n.sources.map(function(source_node){ return side_points.make('entry', n, rankDir, source_node) })
       return n
     })
-
-    var nodes_by_id = nodes.reduce(function(nids, n){
-      nids[n.id] = n
-      return nids
-    }, {})
 
     var ranks =  Object.keys(nodes_keys).sort(function(a, b){ return +a - +b })
                                         .map(function(k, i){
@@ -143,31 +157,20 @@ var log = console.log.bind(console)
                                           return this[k]
                                         }, nodes_keys)
     var gaps = Array(ranks.length + 1)
+
     ranks.reduce(function(p,a,i) {
       gaps[i] = Gaps.extend({get_gaps: function(){ return gaps}})
-                    .make(p, a, i, step_of_exit, forward_skip_of_exit, backward_skip_of_exit)
+                    .make(p, a, i, steps, skips)
 
       return a
     }, [])
+
     gaps[ranks.length] = Gaps.extend({get_gaps: function(){ return gaps}})
-                             .make(ranks[ranks.length - 1], [], ranks.length, step_of_exit, forward_skip_of_exit, backward_skip_of_exit)
+                             .make(ranks[ranks.length - 1], [], ranks.length, steps, skips)
 
 
     var edges = gaps.reduce(function(pw, gap){
-      var step_segments = gap.steps.reduce(function(steps, step){
-        var exit_doubles = steps.filter(function(s){ return s[0].relative == step[0].relative })
-        if ( exit_doubles.length == 1 ) {
-          var exit_double = exit_doubles.reduce(function(_,s){ return s}, false)
-          log(step, exit_double)
-          step[0].remove()
-          step[1].remove()
-          step[0] = exit_double[0]
-          step[1] = exit_double[1]
-          step[2].origin = step[1]
-        }
-        steps.push(step)
-        return steps
-      }, [])
+      var step_segments = gap.steps.reduce(require('./steps_collapse.js'), [])
       var forward_skip_segments = gap.forward_skips
       var backward_skip_segments = gap.backward_skips
       return pw.concat([]

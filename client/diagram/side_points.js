@@ -38,7 +38,7 @@ void function(){
 
   function calculate(point){
     return divide_side(
-            side_from_direction(point.relative
+            side_from_direction(point.node
                               , point.rankDir[point.type == 'exit' ? 1 : 0])
           , list(point).length
           , index(point))
@@ -53,7 +53,7 @@ void function(){
   }
 
   function list(point){
-    return point.type == 'exit' ? point.relative.exit_points : point.relative.entry_points
+    return point.type == 'exit' ? point.node.exit_points : point.node.entry_points
   }
 
   function remove(point){
@@ -61,21 +61,33 @@ void function(){
   }
 
   function get_gap_number(point){
-    return point.relative.true_rank + (point.type == 'entry' ? 0 : 1)
+    return point.node.true_rank + (point.type == 'entry' ? 0 : 1)
+  }
+
+  function get_other_end(point){
+    var pair_node = point.pair_node
+    var ppt = point.type == 'entry' ? 'exit_points' : 'entry_points'
+    var pnt = point.type == 'entry' ? 'exits' : 'entries'
+    var pair_point = pair_node[ppt][pair_node[pnt][point.node.id]]
+    return pair_point
   }
 
   module.exports = viral.extend({
-    init: function(type, relative, rankDir, match){
+    init: function(type, node, rankDir, pair_node){
       this.type = type
-      this.relative = relative
+      this.node = node
+      this.pair_node = pair_node
+      this.exit = type == 'exit' ? node : pair_node
       this.rankDir = rankDir
-      this.match = match
+      this.entry = type == 'entry' ? node : pair_node
+      this.edge_id = node.graph.incidentEdges(node.id, pair_node.id)
     }
   , x: enslave(get_x)
   , y: enslave(get_y)
   , static: enslave(calculate)
   , remove: enslave(remove)
   , gap_number: enslave(get_gap_number)
+  , other_endpoint: enslave(get_other_end)
   })
 
 }()
