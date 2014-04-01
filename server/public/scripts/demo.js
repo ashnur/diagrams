@@ -197,8 +197,6 @@ void function(){
   links[6] = graph_random_3.connect( 'FCHLine' , random_nodes_3[1] , random_nodes_3[0])
   links[5] = graph_random_3.connect( 'FCHLine' , random_nodes_3[1] , random_nodes_3[4])
   links[6] = graph_random_3.connect( 'FCHLine' , random_nodes_3[4] , random_nodes_3[2])
-  links[7] = graph_random_3.connect( 'FCHLine' , random_nodes_3[3] , random_nodes_3[2])
-  //links[8] = graph_random_3.connect( 'FCHLine' , random_nodes_3[3] , random_nodes_3[3])
 
   var diagram_ranked = Diagram.diagram(config, graph_ranked)
   var diagram_unranked = Diagram.diagram(config, graph_unranked)
