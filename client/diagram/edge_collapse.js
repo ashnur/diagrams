@@ -6,7 +6,7 @@ void function(){
   function first(as){ return as && as[0] }
 
   // [a] → a
-  function last(as){ return as && as[as.length - 0] }
+  function last(as){ return as && as[as.length - 1] }
 
   // a → Boolean
   function not_null(a){ return a != null }
@@ -20,6 +20,13 @@ void function(){
   // (a1 → a2 → ... → aN → b) → (#[a1, a2, ..., aN) → b)
   function spread(f){
     return function(args){ return f.apply(this, args) }
+  }
+
+  // [[a]] → [a]
+  function longest(ls){
+    return ls.reduce(function(longest, l){
+      return longest.length < l.length ? l : longest
+    })
   }
 
   // ([[a]] → [a])
@@ -50,7 +57,7 @@ void function(){
   // Edge → Node
   function target(edge){
     var last_point = last(edge)
-    return last_point && last_point.exit
+    return last_point && last_point.entry
   }
 
   // MergedEdge → [Node]
@@ -130,24 +137,37 @@ void function(){
   // (MergedEdge, MergedEdge) → MergedEdge
   function merge_by_source(b, a){
  //log(a, b)
-    b[0][0].remove()
-    b[0][0] = a[0][0]
-    b[0][1] = a[0][1]
-    b[0][2].exit_junction = b[0][1]
+    var b_exits = b.map(first)
+    var a_exit = first(a)
+
+    b.forEach(function(b_exit){
+      b_exit[0].remove()
+      b_exit[0] = a_exit[0]
+      b_exit[1] = a_exit[1]
+      b_exit[2].exit_junction = b_exit[1]
+    })
     return a.concat(b)
   }
 
   // (MergedEdge, MergedEdge) → MergedEdge
   function merge_by_target(b, a){
  //log(a, b)
-    var b_last = b.length - 1
-    var a_last = a.length - 1
-    var b_end = b[b_last].length - 1
-    var a_end = a[a_last].length - 1
-    b[b_last][b_end].remove()
-    b[b_last][b_end] = a[a_last][a_end]
-    b[b_last][b_end - 1] = a[a_last][a_end - 1]
-    b[b_last][b_end - 2].exit_junction = b[b_last][b_end - 1]
+    var b_entries = b.map(last)
+    var a_entry = longest(a)
+    var a_end = a_entry.length - 1
+
+    b.forEach(function(b_entry){
+      var b_end = b_entry.length - 1
+      b_entry[b_end].remove()
+      b_entry[b_end] = a_entry[a_end]
+      b_entry[b_end - 1] = a_entry[a_end - 1]
+//      b_entry[b_end - 2].entry_junction = b_entry[b_end - 1]
+      if ( b_end == 5 && a_end == 5) {
+        b_entry[1] = a_entry[1]
+        b_entry[2] = a_entry[2]
+        b_entry[3] = a_entry[3]
+      }
+    })
 
     return a.concat(b)
   }
@@ -163,23 +183,18 @@ void function(){
 
       var s = ds.concat(ms, ns)
 
+      return s
+    }, []).reduce(function(mes, me){
 
-      var dt = different_targets(s, me)
-      var st = same_targets(s, me)
+      var dt = different_targets(mes, me)
+      var st = same_targets(mes, me)
+// log(st)
       var mt = st.map(merge_by_target.bind(null, me))
-      var nt = new_targets(s, me)
-
-
+      var nt = new_targets(mes, me)
 
       return dt.concat(mt, nt)
     }, [])
 
-//      var exit_double = exit_doubles.reduce(function(_,me){ return me}, false)
-//    var exit_doubles =
-//                            .filter(function(me){
-//                              return me[0].exit == edge[0].exit
-//                            })
-//
 
 //log(mes, flatten(mes))
     return flatten(mes)
