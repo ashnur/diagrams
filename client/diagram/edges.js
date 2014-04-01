@@ -62,6 +62,12 @@ var log = console.log.bind(console)
 
   function sort_by_orientation(vertical, a, b){ return vertical ? a : b }
 
+  function get_gaps_edges(gaps){
+    return gaps.reduce(function(edges, edge){
+      return edges.concat(edge.forward_skips.concat(edge.steps, edge.backward_skips))
+    }, [])
+  }
+
   module.exports = function calculate_edges(diagram, layout){
 
 
@@ -93,38 +99,6 @@ var log = console.log.bind(console)
       ]
       return skip
     }
-
-//    function forward_skips(gap, exit_point, si){
-//
-//      var entry_node = exit_point.pair_node
-//      var entry_point = exit_point.other_endpoint()
-//      var exit_junction = junction_points.make('exit', exit_point, si, gap, rankDir, rankSep, 'forward')
-//      var entry_junction = junction_points.make('entry', entry_point, si, gap, rankDir, rankSep, 'forward')
-//      var skip = [
-//        exit_point
-//      , exit_junction
-//      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
-//      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, reversed, g, rank_attr, level_dir)
-//      , entry_junction
-//      , entry_point
-//      ]
-//      return skip
-//    }
-//    function backward_skips(gap, exit_point, si){
-//      var entry_node = exit_point.pair_node
-//      var entry_point = exit_point.other_endpoint()
-//      var exit_junction = junction_points.make('exit', exit_point, si, gap, rankDir, rankSep, 'backward')
-//      var entry_junction = junction_points.make('entry', entry_point, si, gap, rankDir, rankSep, 'backward')
-//      var skip = [
-//        exit_point
-//      , exit_junction
-//      , skip_points.make('backward',  exit_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
-//      , skip_points.make('backward', entry_junction, gap, si, rankDir, skipsep, ! reversed, g, rank_attr, level_dir)
-//      , entry_junction
-//      , entry_point
-//      ]
-//      return skip
-//    }
 
     var rankSep = diagram.config.layout_config.rankSep
     var g = layout.graph()
@@ -168,18 +142,8 @@ var log = console.log.bind(console)
     gaps[ranks.length] = Gaps.extend({get_gaps: function(){ return gaps}})
                              .make(ranks[ranks.length - 1], [], ranks.length, steps, skips)
 
-
-    var edges = gaps.reduce(function(pw, gap){
-      var step_segments = gap.steps.reduce(require('./steps_collapse.js'), [])
-      var forward_skip_segments = gap.forward_skips
-      var backward_skip_segments = gap.backward_skips
-      return pw.concat([]
-               , step_segments.reduce(segments, [])
-               , forward_skip_segments.reduce(segments, [])
-               , backward_skip_segments.reduce(segments, [])
-      )
-
-    }, [])
+    var collapse_edges = require('./edge_collapse.js')
+    var edges = collapse_edges(get_gaps_edges(gaps)).reduce(segments, [])
 
 
     edges.growth = gaps.reduce(function(ss, r){ return ss + r.forward_skips.length + r.backward_skips.length}, 0) * skipsep

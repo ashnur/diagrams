@@ -32,14 +32,15 @@ var log = console.log.bind(console)
 
   function index(point){
     var l = list(point)
-    var q = point.type == 'step' && point.node_point.type == 'entry' ? point.exit_junction : point
+    var q = point.type == 'step' && point.node_point.type == 'entry' ? point.exit_junction
+          : point
     var r = l.indexOf(q)
     return r
   }
 
   function get_gap(point){
     return point.type == 'entry' && point.skipDir == 'forward'  ? point.gap.get_gaps()[point.node_point.node.true_rank]
-         : point.type == 'exit'  && point.skipDir == 'backward' ? point.gap.get_gaps()[point.node_point.node.true_rank]
+         : point.type == 'entry' && point.skipDir == 'backward' ? point.gap.get_gaps()[point.node_point.node.true_rank]
          : point.gap
   }
 
@@ -68,7 +69,7 @@ var log = console.log.bind(console)
 
   function psep(point){
     var l = list(point)
-    // log( l.length)
+
     return point.rankSep / (l.length + 1)
   }
 

@@ -2,7 +2,7 @@ void function(){
   var viral = require('viral')
   var enslave = require('enslave')
 
-  function get_edges(gap){
+  function get_edges_combined(gap){
     return gap.get_gaps().reduce(function(l, g){
       return l.concat( []
       , g.forward_skips
@@ -11,8 +11,13 @@ void function(){
       , gap.backward_skips
       , g.backward_skips
       )
-    }, [])//.filter(function(p){ console.log(p);return p.gap_number() == gn })
-s
+    }, [])
+  }
+
+  function get_edges(gap){
+    return gap.get_gaps().reduce(function(edges, edge){
+      return edges.concat(edge.forward_skips.concat(edge.steps, edge.backward_skips))
+    }, [])
   }
 
   function get_steps(gap){
@@ -44,6 +49,7 @@ s
       this.index = rn
     }
   , edges: enslave(get_edges)
+  , edges_combined: enslave(get_edges_combined)
   , get_steps: enslave(get_steps)
 
   })

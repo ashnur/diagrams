@@ -16,14 +16,14 @@ void function(){
     }
 
   , zipGreedy: function(xs, ys){
-      return Array.apply(null, Array(Math.min(xs.length, ys.length)))
+      return Array.apply(null, Array(Math.max(xs.length, ys.length)))
                   .map(function(_, i){
                     return [xs[i], ys[i]]
                   })
     }
 
   , zipWithGreedy: function(fn, xs, ys){
-      return Array.apply(null, Array(Math.Max(xs.length, ys.length)))
+      return Array.apply(null, Array(Math.max(xs.length, ys.length)))
                   .map(function(_, i){
                     return fn(xs[i], ys[i])
                   })
