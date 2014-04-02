@@ -44,9 +44,6 @@ var log = console.log.bind(console)
          : point.gap
   }
 
-
-
-
   function give_value(node){
     return (node.true_rank + 1) * (node.x + node.y)
   }

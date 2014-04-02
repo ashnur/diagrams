@@ -56,9 +56,7 @@ var log = console.log.bind(console)
   function idx_to_id(s, t, i){
     s[t.id] = i
     return s
-
   }
-
 
   function sort_by_orientation(vertical, a, b){ return vertical ? a : b }
 
