@@ -90,8 +90,8 @@ var log = console.log.bind(console)
       var skip = [
         exit_point
       , exit_junction
-      , skip_points.make('forward',  exit_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
-      , skip_points.make('forward', entry_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
+      , skip_points.make(direction,  exit_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
+      , skip_points.make(direction, entry_junction, gap, si, rankDir, skipsep, rev, g, rank_attr, level_dir)
       , entry_junction
       , entry_point
       ]

@@ -33,8 +33,10 @@ var log = console.log.bind(console)
   function index(point){
     var l = list(point)
     var q = point.type == 'step' && point.node_point.type == 'entry' ? point.exit_junction
+          : point.type == 'entry' && point.node_point.type == 'entry' ? point.relative
           : point
     var r = l.indexOf(q)
+// if (r == -1   ) log(l, point, point.relative)
     return r
   }
 
@@ -55,7 +57,10 @@ var log = console.log.bind(console)
                     js = js.concat(s.filter(function is_junc(p){
                       return p.init == Junction.init
                              && p.gap_number() == gn
+                             // && p.type != 'entry'
+                             && ! (p.type == 'entry' && p.node_point.type == 'entry')
                              && ! (p.type == 'step' && p.node_point.type == 'entry')
+
                     }))
                     return js
                   }, [])
@@ -66,7 +71,6 @@ var log = console.log.bind(console)
 
   function psep(point){
     var l = list(point)
-
     return point.rankSep / (l.length + 1)
   }
 
@@ -101,6 +105,7 @@ var log = console.log.bind(console)
   , static: enslave(calculate)
   , remove: enslave(remove)
   , gap_number: enslave(get_gap_number)
+  , index: enslave(index)
   })
 
   module.exports = Junction

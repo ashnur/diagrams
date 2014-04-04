@@ -2,6 +2,7 @@ void function(){
   var viral = require('viral')
   var enslave = require('enslave')
   var translate = require('../util/translate.js')
+  var log = console.log.bind(console)
 
   function side_from_direction(node, d){
     var w  = node.width / 2
@@ -49,7 +50,8 @@ void function(){
   function get_y(point){ return calculate(point).y }
 
   function index(point){
-    return list(point).indexOf(point)
+    var r = list(point).indexOf(point)
+    return r
   }
 
   function list(point){
@@ -57,7 +59,8 @@ void function(){
   }
 
   function remove(point){
-    return list(point).splice(index(point), 1)
+    var idx = index(point)
+    return idx > -1 ? list(point).splice(idx, 1) : false
   }
 
   function get_gap_number(point){
@@ -88,6 +91,8 @@ void function(){
   , remove: enslave(remove)
   , gap_number: enslave(get_gap_number)
   , other_endpoint: enslave(get_other_end)
+  , index: enslave(index)
+  , list: enslave(list)
   })
 
 }()

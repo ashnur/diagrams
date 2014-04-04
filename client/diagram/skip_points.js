@@ -17,9 +17,11 @@ void function(){
     var level_amount = (s_length + point.sidx) * point.skipsep
     var level = point.rev ? 0 - level_amount : point.g[point.level_dir] + level_amount
 
-    return {
-      x: orientate(point.rankDir, level, point.relative[point.rank_attr]())
-    , y: orientate(point.rankDir, point.relative[point.rank_attr](), level)
+    var rel = point.relative.static()
+log(point.deleted)
+    return point.deleted ? point.relative.static() : {
+      x: orientate(point.rankDir, level, rel[point.rank_attr])
+    , y: orientate(point.rankDir, rel[point.rank_attr], level)
     }
   }
 
@@ -27,10 +29,17 @@ void function(){
 
   function get_y(point){ return calculate(point).y }
 
-  function index(point){ return point.gap.get_gaps().indexOf(point.gap) }
+  function index(point){
+
+    return point.gap.get_gaps().indexOf(point.gap)
+  }
 
   function get_gap_number(point){
     return point.relative.gap_number()
+  }
+
+  function remove(point){
+    point.deleted = true
   }
 
   module.exports = viral.extend({
@@ -45,11 +54,13 @@ void function(){
       this.g = g
       this.rank_attr = rank_attr
       this.level_dir = level_dir
+      this.deleted = false
     }
   , x: enslave(get_x)
   , y: enslave(get_y)
   , static: enslave(calculate)
   , gap_number: enslave(get_gap_number)
+  , remove: enslave(remove)
   })
 
 }()
